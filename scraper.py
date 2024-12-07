@@ -1,4 +1,3 @@
-import argparse
 from playwright.sync_api import sync_playwright
 from credentials import get_credentials
 from supabase import create_client
@@ -10,6 +9,7 @@ import re
 URL_list = {
     "personal_feed": "https://tradingedge.club/feed?sort=newest",
     # A users activity doesn't show ALL posts they have posted, I'm only able to scroll down to a certain point before it stops loading more posts
+    # This also includes comments from the user, not just posts.
     "tearrepresentative56_activity_feed": "https://tradingedge.club/members/29038203/feed"
 }
 
