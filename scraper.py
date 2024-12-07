@@ -6,7 +6,7 @@ import time
 import re
 
 
-URL_list = {
+URL_LIST = {
     "personal_feed": "https://tradingedge.club/feed?sort=newest",
     # A users activity doesn't show ALL posts they have posted, I'm only able to scroll down to a certain point before it stops loading more posts
     # This also includes comments from the user, not just posts.
@@ -25,7 +25,7 @@ MIN_LOOKBACK_DAYS = 1
 # scraper = Scraper()
 # threading.Thread(target=scraper.run).start()
 class Scraper:
-    def __init__(self, url=URL_list["tearrepresentative56_activity_feed"], polling_rate=60*5, lookback_days=3, headless=True, debug=False):
+    def __init__(self, url=URL_LIST["tearrepresentative56_activity_feed"], polling_rate=60*5, lookback_days=3, headless=True, debug=False):
         self.url = url
         self.polling_rate = max(MIN_POLLING_RATE, polling_rate) # 2 minutes is the minimum polling rate
         self.headless = headless
