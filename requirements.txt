@@ -1,2 +1,5 @@
+streamlit
 playwright
 supabase
+plotly
+yfinance
