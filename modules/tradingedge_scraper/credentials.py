@@ -3,7 +3,7 @@ import json
 
 
 # Get the directory of the current Python file
-current_dir = os.path.dirname(os.path.abspath(__file__))
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def set_credentials():
@@ -35,19 +35,19 @@ def set_credentials():
     }
 
     # Save credentials
-    credentials_path = os.path.join(current_dir, "credentials.json")
+    credentials_path = os.path.join(CURRENT_DIR, "credentials.json")
     with open(credentials_path, "w") as credentials_file:
         json.dump(credentials, credentials_file, indent=4)
 
 
 def get_credentials():
     # Check if credentials exist
-    if not os.path.exists(os.path.join(current_dir, "credentials.json")):
+    if not os.path.exists(os.path.join(CURRENT_DIR, "credentials.json")):
         print("\033[1;31mError: No credentials found. Running set_credentials().\033[0m")
         set_credentials()
 
     # Load credentials
-    with open(os.path.join(current_dir, "credentials.json"), "r") as credentials_file:
+    with open(os.path.join(CURRENT_DIR, "credentials.json"), "r") as credentials_file:
         credentials = json.load(credentials_file)
         return credentials
 

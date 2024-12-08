@@ -119,7 +119,7 @@ class Scraper:
             # Check if post exists already
             post_exists = self.supabase.table("posts").select("id").eq("id", id).execute().data
             if post_exists:
-                self.update_post(id, title, description, likes, comments, link)
+                self.update_post(id, title, description, likes, comments)
                 number_updated_posts += 1
             else:
                 self.add_post(id, author, title, description, likes, comments, link, category)

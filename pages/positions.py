@@ -3,12 +3,13 @@ import yfinance as yf
 import json
 from datetime import datetime, timedelta
 import plotly.graph_objects as go
-from modules.navigation import add_navigation
+from pages.navigation import add_navigation
+from config import LOCAL_DIR
 
 add_navigation()
 st.title("Positions")
 
-current_positions = json.load(open("components/settings.json"))["current_positions"]
+current_positions = json.load(open(f"{LOCAL_DIR}/settings.json"))["current_positions"]
 tickers = [position["Ticker"] for position in current_positions]
 selected_position = st.selectbox("Select position", tickers)
 position_data = next(pos for pos in current_positions if pos["Ticker"] == selected_position)

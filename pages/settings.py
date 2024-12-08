@@ -1,11 +1,12 @@
 import streamlit as st
 import json
 import pytz
-from modules.navigation import add_navigation
+from pages.navigation import add_navigation
+from config import LOCAL_DIR
 
 # Load existing settings from JSON file
 try:
-    with open("components/settings.json", "r") as f:
+    with open(f"{LOCAL_DIR}/settings.json", "r") as f:
         settings = json.load(f)
 except FileNotFoundError:
     settings = {
@@ -56,7 +57,7 @@ with col3:
 st.divider()
 
 # save everything to the settings.json file
-with open("components/settings.json", "w") as f:
+with open(f"{LOCAL_DIR}/settings.json", "w") as f:
     json.dump({
         "timezone": timezone,
         "current_positions": current_positions,
