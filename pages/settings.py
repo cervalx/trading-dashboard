@@ -1,7 +1,6 @@
 import streamlit as st
 import json
 import pytz
-import pandas as pd
 from modules.navigation import add_navigation
 
 add_navigation()
@@ -19,7 +18,11 @@ col1, col2, col3 = st.columns(3)
 with col1:
     st.write("Current positions")
     current_positions = st.data_editor(
-    {"Ticker": ["NVDA", "TSLA", "AAPL"]},
+                [
+            {"Ticker": "NVDA", "Quantity": 10, "AvgPrice": 100},
+            {"Ticker": "TSLA", "Quantity": 20, "AvgPrice": 280},
+            {"Ticker": "AAPL", "Quantity": 30, "AvgPrice": 220}
+        ],
         num_rows="dynamic"
     )
 
@@ -41,5 +44,10 @@ st.divider()
 
 # save everything to the settings.json file
 with open("components/settings.json", "w") as f:
-    json.dump({"timezone": timezone, "current_positions": current_positions["Ticker"], "watchlist_positions": watchlist_positions["Ticker"], "previous_traded_positions": previous_traded_positions["Ticker"]}, f)
+    json.dump({
+        "timezone": timezone,
+        "current_positions": current_positions,
+        "watchlist_positions": watchlist_positions["Ticker"],
+        "previous_traded_positions": previous_traded_positions["Ticker"]
+    }, f)
 

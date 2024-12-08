@@ -8,8 +8,10 @@ from modules.navigation import add_navigation
 add_navigation()
 st.title("Positions")
 
-list_positions = json.load(open("components/settings.json"))["current_positions"]
-selected_position = st.selectbox("Select position", list_positions)
+current_positions = json.load(open("components/settings.json"))["current_positions"]
+tickers = [position["Ticker"] for position in current_positions]
+selected_position = st.selectbox("Select position", tickers)
+position_data = next(pos for pos in current_positions if pos["Ticker"] == selected_position)
 
 # Fetch NVDA stock data for the last year
 end_date = datetime.now()
@@ -30,6 +32,9 @@ fig.update_layout(
     xaxis_title='Date',
     xaxis_rangeslider_visible=False
 )
+
+# draw horizontal line at the average price
+fig.add_hline(y=position_data["AvgPrice"], line_dash="dash", line_color="green", line_width=1)
 
 # Display the chart
 st.plotly_chart(fig, use_container_width=True)
