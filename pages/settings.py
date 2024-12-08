@@ -49,5 +49,5 @@ with open("components/settings.json", "w") as f:
         "current_positions": current_positions,
         "watchlist_positions": watchlist_positions["Ticker"],
         "previous_traded_positions": previous_traded_positions["Ticker"]
-    }, f)
+    }, f, indent=2)
 
