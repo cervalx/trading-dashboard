@@ -1,5 +1,5 @@
 import streamlit as st
-from pages.navigation import add_navigation
+from modules.navigation import add_navigation
 
 add_navigation()
 

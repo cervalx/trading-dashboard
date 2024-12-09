@@ -1,7 +1,7 @@
 import streamlit as st
 import json
 import pytz
-from pages.navigation import add_navigation
+from modules.navigation import add_navigation
 from config import LOCAL_DIR
 
 # Load existing settings from JSON file

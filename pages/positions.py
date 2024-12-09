@@ -3,7 +3,7 @@ import yfinance as yf
 import json
 from datetime import datetime, timedelta
 import plotly.graph_objects as go
-from pages.navigation import add_navigation
+from modules.navigation import add_navigation
 from config import LOCAL_DIR
 
 add_navigation()
