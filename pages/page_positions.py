@@ -40,4 +40,10 @@ fig.add_hline(y=position_data["AvgPrice"], line_dash="dash", line_color="green",
 # Display the chart
 st.plotly_chart(fig, use_container_width=True)
 
+st.divider()
+st.subheader("Options Analysis")
+# Link to https://mztrading.netlify.app/options/analyze/NVDA
+st.write(f"Link to https://mztrading.netlify.app/options/analyze/{selected_position}")
+
+st.divider()
 # TODO: add posts about ticker
