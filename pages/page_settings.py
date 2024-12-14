@@ -3,32 +3,27 @@ import json
 import pytz
 from modules.navigation import add_navigation
 from config import LOCAL_DIR
+from modules.settings import Settings
 
 # Load existing settings from JSON file
-try:
-    with open(f"{LOCAL_DIR}/settings.json", "r") as f:
-        settings = json.load(f)
-except FileNotFoundError:
-    settings = {
-        "timezone": "UTC",
-        "current_positions": [
-            {"Ticker": "NVDA", "Quantity": 10, "AvgPrice": 100},
-            {"Ticker": "TSLA", "Quantity": 20, "AvgPrice": 280},
-            {"Ticker": "AAPL", "Quantity": 30, "AvgPrice": 220}
-        ],
-        "watchlist_positions": ["COKE", "ARM"],
-        "previous_traded_positions": ["SMCI", "TSLA", "AAPL"]
-    }
+settings = Settings.load_settings()
 
 add_navigation()
 st.title("Settings")
 
+st.subheader("Global Settings")
 # Add a selectbox for the timezone (list all timezones)
 timezone = st.selectbox("Select your timezone", pytz.all_timezones, 
                        index=pytz.all_timezones.index(settings["timezone"]))
 
 st.divider()
+st.subheader("Main page")
+# add messages for every day of the week
+messages_day = st.data_editor(settings["messages_day"], num_rows=7)
 
+
+st.divider()
+st.subheader("Positions")
 # organise in 3 columns, use with: st.
 col1, col2, col3 = st.columns(3)
 
@@ -55,13 +50,20 @@ with col3:
     )
 
 st.divider()
+st.subheader("Telegram Bot")
+telegram_bot_token = st.text_input("Enter your Telegram Bot Token", type="password")
+telegram_chat_id = st.text_input("Enter your Telegram Chat ID")
+
+st.divider()
 
 # save everything to the settings.json file
-with open(f"{LOCAL_DIR}/settings.json", "w") as f:
-    json.dump({
-        "timezone": timezone,
-        "current_positions": current_positions,
-        "watchlist_positions": watchlist_positions["Ticker"],
-        "previous_traded_positions": previous_traded_positions["Ticker"]
-    }, f, indent=2)
+Settings.save_settings({
+    "timezone": timezone,
+    "current_positions": current_positions,
+    "watchlist_positions": watchlist_positions["Ticker"],
+    "previous_traded_positions": previous_traded_positions["Ticker"],
+    "messages_day": messages_day,
+    "telegram_bot_token": telegram_bot_token,
+    "telegram_chat_id": telegram_chat_id
+})
 
