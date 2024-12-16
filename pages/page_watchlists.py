@@ -14,5 +14,5 @@ st.title("Watchlists")
 # EDIT to add/remove tickers from existing list
 
 # ANALIZE
-# Select a watchlist, show for eacth ticker pct. change since [timestamp watchlist created, timestamp ticker added to watchlist, custom timestamp input]
+# Select a watchlist, show for eacth ticker pct. change since [timestamp watchlist created, custom timestamp input]
 # Show graphs using yfinance for the moment
