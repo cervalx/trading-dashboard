@@ -1,5 +1,6 @@
 import streamlit as st
 from modules.navigation import *
+
 add_navigation()
 
 st.title("Watchlists")
@@ -9,7 +10,7 @@ st.title("Watchlists")
 # input metadata: date watchlist created
 # Cleanup list
 
-#SAVE as json file .local/watchlists.json, populate with default values if local file does not exist
+# SAVE as json file .local/watchlists.json, populate with default values if local file does not exist
 
 # EDIT to add/remove tickers from existing list
 
