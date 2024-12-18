@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "trading-dashboard"
+version = "0.1.0"
+description = "Stock analysis dashboard using streamlit"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+streamlit = "^1.41.1"
+playwright = "^1.49.1"
+supabase = "^2.10.0"
+plotly = "^5.24.1"
+yfinance = "^0.2.50"
+python-telegram-bot = "^21.9"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.10.0"
+pyright = "^1.1.391"
+watchdog = "^6.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
