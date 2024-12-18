@@ -57,4 +57,3 @@ st.write(f"Link to https://mztrading.netlify.app/options/analyze/{selected_posit
 
 st.divider()
 # TODO: add posts about ticker
-

@@ -240,4 +240,3 @@ class PostData:
 if __name__ == "__main__":
     scraper = Scraper(debug=True, headless=False)
     scraper.run()
-
