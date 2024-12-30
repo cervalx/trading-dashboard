@@ -1,5 +1,7 @@
 import os
 import json
+from colorama import Fore, Style, Back, init
+import inquirer
 
 
 # Get the directory of the current Python file
@@ -8,35 +10,28 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def set_credentials():
     # Get tradingedge.club credentials
-    print()
     print(
-        "\033[1;33mTo access the scraper service you need to set the email and password you used for tradingedge.club first.\033[0m"
+        f"""{os.linesep}{Fore.YELLOW}
+        To access the scraper service you need to set the email and password you used for tradingedge.club first.{os.linesep}
+        The credentials will be saved to your local system and NOT be shared with anyone.{os.linesep}
+        The service cannot be used when you are logging in by using your Google account, etc. You must be able to login via email and password.{os.linesep}
+        The scraper currently only scrapes what is shown in the feed of the account logged in, so make sure to unsubscribe from unwanted channels.{os.linesep}
+        {Style.RESET_ALL}{os.linesep}
+        """
     )
-    print(
-        "\033[1;33mThe credentials will be saved to your local system and NOT be shared with anyone.\033[0m"
-    )
-    print(
-        "\033[1;33mThe service cannot be used when you are logging in by using your Google account, etc. You must be able to login via email and password.\033[0m"
-    )
-    print(
-        "\033[1;33mThe scraper currently only scrapes what is shown in the feed of the account logged in, so make sure to unsubscribe from unwanted channels.\033[0m"
-    )
-    print()
     tradingedge_email = input("Enter your tradingedge.club email : ")
     tradingedge_password = input("Enter your tradingedge.club password: ")
-    print()
 
     # Get Supabase credentials
     print(
-        "\033[1;33mTo access the database you also need to set the Supabase URL and API-Key.\033[0m"
+        f"""{os.linesep}{Fore.YELLOW}
+        To access the database you also need to set the Supabase URL and API-Key.{os.linesep}
+        This is only available to developers of this projects, so ask them for access.{os.linesep}
+        {Style.RESET_ALL}{os.linesep}
+        """
     )
-    print(
-        "\033[1;33mThis is only available to developers of this projects, so ask them for access.\033[0m"
-    )
-    print()
     supabase_url = input("Enter the Supabase URL: ")
     supabase_api_key = input("Enter the Supabase API-Key: ")
-    print()
 
     # Prepare credentials as dictionary
     credentials = {
@@ -66,5 +61,29 @@ def get_credentials():
         return credentials
 
 
+def tester_inq():
+    questions = [
+        inquirer.List(
+            "theme",
+            message=f"{Fore.CYAN}Choose a theme:",
+            choices=[
+                f"{Fore.BLUE}Dark Blue",
+                f"{Fore.GREEN}Forest Green",
+                f"{Fore.YELLOW}Bright Yellow",
+            ],
+        ),
+        inquirer.Confirm(
+            "confirmation",
+            message=f"{Fore.MAGENTA}{Back.WHITE}Are you sure?{Style.RESET_ALL}",
+        ),
+    ]
+
+    answers = inquirer.prompt(questions)
+
+    print(f"Theme: {answers['theme']}")
+    print(f"Confirmation: {answers['confirmation']}")
+
+
 if __name__ == "__main__":
-    set_credentials()
+    # set_credentials()
+    tester_inq()
