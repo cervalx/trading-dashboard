@@ -55,7 +55,7 @@ def get_credentials():
     # Check if credentials exist
     if not os.path.exists(os.path.join(CURRENT_DIR, "credentials.json")):
         print(
-            "\033[1;31mError: No credentials found. Running set_credentials().\033[0m"
+            f"{Fore.RED}Error: No credentials found. Running set_credentials().{Style.RESET_ALL}"
         )
         set_credentials()
 
