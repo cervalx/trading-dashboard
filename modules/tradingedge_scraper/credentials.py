@@ -2,16 +2,29 @@ import os
 import json
 from colorama import Fore, Style, Back, init
 import inquirer
+from email_validator import validate_email, EmailNotValidError
 
 
 # Get the directory of the current Python file
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
+class EmailValidator(inquirer.Validator):
+    def validate(self, document):
+        try:
+            validate_email(document.text)
+        except EmailNotValidError as e:
+            raise inquirer.ValidationError("", reason=str(e))
+
+
 def set_credentials():
     # Get tradingedge.club credentials
     trading_edge_prompts = [
-        inquirer.Text("email", message="Enter your tradingedge.club email:"),
+        inquirer.Text(
+            "email",
+            message="Enter your tradingedge.club email:",
+            validate=EmailValidator,
+        ),
         inquirer.Password("password", message="Enter your tradingedge.club password:"),
     ]
     print(
