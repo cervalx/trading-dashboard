@@ -36,6 +36,24 @@ def validate_url(answers, current):
     return True
 
 
+def get_supabase_credentials():
+    # Get Supabase credentials
+    supabase_prompts = [
+        inquirer.Text(
+            "supabase_url", message="Enter the Supabase URL", validate=validate_url
+        ),
+        inquirer.Text("supabase_api_key", message="Enter the Supabase API-Key"),
+    ]
+    print(
+        f"""{os.linesep}{Fore.YELLOW}
+        To access the database you also need to set the Supabase URL and API-Key.{os.linesep}
+        This is only available to developers of this projects, so ask them for access.{os.linesep}
+        {os.linesep}
+        """
+    )
+    return inquirer.prompt(supabase_prompts)
+
+
 def set_credentials():
     # Get tradingedge.club credentials
     trading_edge_prompts = [
@@ -57,27 +75,31 @@ def set_credentials():
     )
     trading_edge_credentials = inquirer.prompt(trading_edge_prompts)
 
-    # Get Supabase credentials
-    supabase_prompts = [
-        inquirer.Text(
-            "supabase_url", message="Enter the Supabase URL", validate=validate_url
-        ),
-        inquirer.Text("supabase_api_key", message="Enter the Supabase API-Key"),
+    storage_questions = [
+        inquirer.List(
+            "storage",
+            message="Where do you want to store the scraped data?",
+            choices=["Supabase", "Supabase Local via Docker", "Parquet(Binary Files)"],
+        )
     ]
-    print(
-        f"""{os.linesep}{Fore.YELLOW}
-        To access the database you also need to set the Supabase URL and API-Key.{os.linesep}
-        This is only available to developers of this projects, so ask them for access.{os.linesep}
-        {os.linesep}
-        """
-    )
-    supabase_credentials = inquirer.prompt(supabase_prompts)
+
+    storage_choice = inquirer.prompt(storage_questions)["storage"]
+
+    storage_credentials = {}
+
+    if storage_choice == "Supabase":
+        storage_credentials = get_supabase_credentials()
+    elif storage_choice == "Supabase Local via Docker":
+        # TODO: it's probably a good idea to spin up a docker container before we get the credentials
+        storage_credentials = get_supabase_credentials()
+    if storage_choice == "Parquet(Binary Files)":
+        pass
 
     # Prepare credentials as dictionary
-    if all([trading_edge_credentials, supabase_credentials]):
+    if all([trading_edge_credentials, storage_credentials]):
         credentials = {
             **trading_edge_credentials,
-            **supabase_credentials,
+            **storage_credentials,
         }
 
         # Save credentials
