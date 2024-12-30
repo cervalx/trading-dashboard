@@ -10,6 +10,10 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def set_credentials():
     # Get tradingedge.club credentials
+    trading_edge_prompts = [
+        inquirer.Text("email", message="Enter your tradingedge.club email:"),
+        inquirer.Password("password", message="Enter your tradingedge.club password:"),
+    ]
     print(
         f"""{os.linesep}{Fore.YELLOW}
         To access the scraper service you need to set the email and password you used for tradingedge.club first.{os.linesep}
@@ -19,10 +23,13 @@ def set_credentials():
         {Style.RESET_ALL}{os.linesep}
         """
     )
-    tradingedge_email = input("Enter your tradingedge.club email : ")
-    tradingedge_password = input("Enter your tradingedge.club password: ")
+    trading_edge_credentials = inquirer.prompt(trading_edge_prompts)
 
     # Get Supabase credentials
+    supabase_prompts = [
+        inquirer.Text("supabase_url", message="Enter the Supabase URL:"),
+        inquirer.Text("supabase_api_key", message="Enter the Supabase API-Key:"),
+    ]
     print(
         f"""{os.linesep}{Fore.YELLOW}
         To access the database you also need to set the Supabase URL and API-Key.{os.linesep}
@@ -30,15 +37,12 @@ def set_credentials():
         {Style.RESET_ALL}{os.linesep}
         """
     )
-    supabase_url = input("Enter the Supabase URL: ")
-    supabase_api_key = input("Enter the Supabase API-Key: ")
+    supabase_credentials = inquirer.prompt(supabase_prompts)
 
     # Prepare credentials as dictionary
     credentials = {
-        "email": tradingedge_email,
-        "password": tradingedge_password,
-        "supabase_url": supabase_url,
-        "supabase_key": supabase_api_key,
+        **trading_edge_credentials,
+        **supabase_credentials,
     }
 
     # Save credentials
