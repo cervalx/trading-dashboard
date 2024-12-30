@@ -65,29 +65,5 @@ def get_credentials():
         return credentials
 
 
-def tester_inq():
-    questions = [
-        inquirer.List(
-            "theme",
-            message=f"{Fore.CYAN}Choose a theme:",
-            choices=[
-                f"{Fore.BLUE}Dark Blue",
-                f"{Fore.GREEN}Forest Green",
-                f"{Fore.YELLOW}Bright Yellow",
-            ],
-        ),
-        inquirer.Confirm(
-            "confirmation",
-            message=f"{Fore.MAGENTA}{Back.WHITE}Are you sure?{Style.RESET_ALL}",
-        ),
-    ]
-
-    answers = inquirer.prompt(questions)
-
-    print(f"Theme: {answers['theme']}")
-    print(f"Confirmation: {answers['confirmation']}")
-
-
 if __name__ == "__main__":
-    # set_credentials()
-    tester_inq()
+    set_credentials()
