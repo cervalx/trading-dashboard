@@ -2,19 +2,37 @@ import os
 import json
 from colorama import Fore, Style, Back, init
 import inquirer
+from inquirer.errors import ValidationError
 from email_validator import validate_email, EmailNotValidError
+from urllib.parse import urlparse
+from loguru import logger
 
 
 # Get the directory of the current Python file
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-class EmailValidator(inquirer.Validator):
-    def validate(self, document):
-        try:
-            validate_email(document.text)
-        except EmailNotValidError as e:
-            raise inquirer.ValidationError("", reason=str(e))
+def validate_email_input(answers, current):
+    try:
+        validate_email(current)
+        return True
+    except EmailNotValidError as e:
+        raise ValidationError(
+            "",  # element name can be left blank
+            reason=str(e),
+        )
+
+
+def validate_url(answers, current):
+    """
+    Custom validator using the standard library's `urllib.parse`
+    to check if the user input is a valid URL-like string.
+    """
+    parsed_url = urlparse(current)
+    # A minimal check: require at least a scheme and a netloc
+    if not parsed_url.scheme or not parsed_url.netloc:
+        raise ValidationError("", reason="Please enter a valid URL.")
+    return True
 
 
 def set_credentials():
@@ -22,10 +40,10 @@ def set_credentials():
     trading_edge_prompts = [
         inquirer.Text(
             "email",
-            message="Enter your tradingedge.club email:",
-            validate=EmailValidator,
+            message="Enter your tradingedge.club email",
+            validate=validate_email_input,
         ),
-        inquirer.Password("password", message="Enter your tradingedge.club password:"),
+        inquirer.Password("password", message="Enter your tradingedge.club password"),
     ]
     print(
         f"""{os.linesep}{Fore.YELLOW}
@@ -40,8 +58,10 @@ def set_credentials():
 
     # Get Supabase credentials
     supabase_prompts = [
-        inquirer.Text("supabase_url", message="Enter the Supabase URL:"),
-        inquirer.Text("supabase_api_key", message="Enter the Supabase API-Key:"),
+        inquirer.Text(
+            "supabase_url", message="Enter the Supabase URL", validate=validate_url
+        ),
+        inquirer.Text("supabase_api_key", message="Enter the Supabase API-Key"),
     ]
     print(
         f"""{os.linesep}{Fore.YELLOW}
@@ -53,15 +73,18 @@ def set_credentials():
     supabase_credentials = inquirer.prompt(supabase_prompts)
 
     # Prepare credentials as dictionary
-    credentials = {
-        **trading_edge_credentials,
-        **supabase_credentials,
-    }
+    if all([trading_edge_credentials, supabase_credentials]):
+        credentials = {
+            **trading_edge_credentials,
+            **supabase_credentials,
+        }
 
-    # Save credentials
-    credentials_path = os.path.join(CURRENT_DIR, "credentials.json")
-    with open(credentials_path, "w") as credentials_file:
-        json.dump(credentials, credentials_file, indent=4)
+        # Save credentials
+        credentials_path = os.path.join(CURRENT_DIR, "credentials.json")
+        with open(credentials_path, "w") as credentials_file:
+            json.dump(credentials, credentials_file, indent=4)
+    else:
+        logger.warning("No credentials could be stored")
 
 
 def get_credentials():
