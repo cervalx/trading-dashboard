@@ -79,7 +79,11 @@ def set_credentials():
         inquirer.List(
             "storage",
             message="Where do you want to store the scraped data?",
-            choices=["Supabase", "Supabase Local via Docker", "Parquet(Binary Files)"],
+            choices=[
+                ("Supabase", "supabase-remote"),
+                ("Supabase Local via Docker", "supabase-local"),
+                ("Parquet(Binary Files)", "parquet"),
+            ],
         )
     ]
 
@@ -87,12 +91,13 @@ def set_credentials():
 
     storage_credentials = {}
 
-    if storage_choice == "Supabase":
+    if storage_choice == "supabase-remote":
         storage_credentials = get_supabase_credentials()
-    elif storage_choice == "Supabase Local via Docker":
+    elif storage_choice == "supabase-local":
         # TODO: it's probably a good idea to spin up a docker container before we get the credentials
         storage_credentials = get_supabase_credentials()
-    if storage_choice == "Parquet(Binary Files)":
+    if storage_choice == "parquet":
+        # TODO: using parquet for storage does not require any credentials so it's fine to not get any
         pass
 
     # Prepare credentials as dictionary
