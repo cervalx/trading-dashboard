@@ -4,8 +4,9 @@ from supabase import create_client
 import datetime
 import time
 import re
-from colorama import init, Fore, Back, Style
+from colorama import init, Fore
 
+init(autoreset=True)
 
 URL_LIST = {
     "personal_feed": "https://tradingedge.club/feed?sort=newest",
@@ -61,9 +62,7 @@ class Scraper:
                 credentials["supabase_url"], credentials["supabase_key"]
             )
         except Exception as e:
-            print(
-                f"{Fore.RED}Error: {e}, could not create Supabase client.{Fore.RESET}"
-            )
+            print(f"{Fore.RED}Error: {e}, could not create Supabase client.")
 
         with sync_playwright() as p:
             # Launch browser
