@@ -4,6 +4,7 @@ from supabase import create_client
 import datetime
 import time
 import re
+from colorama import init, Fore, Back, Style
 
 
 URL_LIST = {
@@ -60,7 +61,9 @@ class Scraper:
                 credentials["supabase_url"], credentials["supabase_key"]
             )
         except Exception as e:
-            print(f"\033[1;31mError: {e}, could not create Supabase client.\033[0m")
+            print(
+                f"{Fore.RED}Error: {e}, could not create Supabase client.{Fore.RESET}"
+            )
 
         with sync_playwright() as p:
             # Launch browser

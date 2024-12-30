@@ -1,6 +1,0 @@
-streamlit
-playwright
-supabase
-plotly
-yfinance
-python-telegram-bot

@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 from loguru import logger
 
 
+init(autoreset=True)
 # Get the directory of the current Python file
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -51,7 +52,7 @@ def set_credentials():
         The credentials will be saved to your local system and NOT be shared with anyone.{os.linesep}
         The service cannot be used when you are logging in by using your Google account, etc. You must be able to login via email and password.{os.linesep}
         The scraper currently only scrapes what is shown in the feed of the account logged in, so make sure to unsubscribe from unwanted channels.{os.linesep}
-        {Style.RESET_ALL}{os.linesep}
+        {os.linesep}
         """
     )
     trading_edge_credentials = inquirer.prompt(trading_edge_prompts)
@@ -67,7 +68,7 @@ def set_credentials():
         f"""{os.linesep}{Fore.YELLOW}
         To access the database you also need to set the Supabase URL and API-Key.{os.linesep}
         This is only available to developers of this projects, so ask them for access.{os.linesep}
-        {Style.RESET_ALL}{os.linesep}
+        {os.linesep}
         """
     )
     supabase_credentials = inquirer.prompt(supabase_prompts)
@@ -90,9 +91,7 @@ def set_credentials():
 def get_credentials():
     # Check if credentials exist
     if not os.path.exists(os.path.join(CURRENT_DIR, "credentials.json")):
-        print(
-            f"{Fore.RED}Error: No credentials found. Running set_credentials().{Style.RESET_ALL}"
-        )
+        print(f"{Fore.RED}Error: No credentials found. Running set_credentials().")
         set_credentials()
 
     # Load credentials
