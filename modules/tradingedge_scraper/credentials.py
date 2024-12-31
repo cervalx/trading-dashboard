@@ -3,6 +3,7 @@ import json
 from colorama import Fore, Style, Back, init
 import inquirer
 from loguru import logger
+from .validators import validate_email_input, validate_url
 
 
 init(autoreset=True)

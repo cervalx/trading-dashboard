@@ -5,6 +5,9 @@ import datetime
 import time
 import re
 from colorama import init, Fore
+from postgrest import AsyncPostgrestClient
+import asyncio
+from loguru import logger
 
 init(autoreset=True)
 
@@ -22,6 +25,34 @@ MAX_LOOKBACK_DAYS = (
     6  # 7 is already considered a week, posts older than 6 days are obsolete anyway
 )
 MIN_LOOKBACK_DAYS = 1
+
+
+async def create_table_if_not_exists(table_name, columns_definition, engine):
+    """
+    Creates a table in Supabase.
+
+    Args:
+        table_name: The name of the table to create.
+        columns_definition: A dictionary where keys are column names and values are SQL column definitions.
+    """
+    try:
+        # Construct the SQL CREATE TABLE statement
+        columns_sql = ", ".join(
+            [f"{name} {definition}" for name, definition in columns_definition.items()]
+        )
+        create_table_sql = f"CREATE TABLE IF NOT EXISTS {table_name} ({columns_sql})"
+
+        # Execute the SQL statement using the Supabase API (as a raw SQL query)
+        response = engine.rpc("executesql", {"sql": create_table_sql}).execute()
+
+        if response.status_code == 200:
+            logger.info(f"Table '{table_name}' created successfully!")
+        else:
+            logger.error(f"Error creating table '{table_name}':")
+            logger.error(response.data)  # Print the error details from Supabase
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 
 # This class scrapes the posts from the given url and inserts them into the database
@@ -56,11 +87,34 @@ class Scraper:
     def run(self):
         credentials = get_credentials()
 
+        async def create_table():
+            async with AsyncPostgrestClient(credentials["supabase_url"]) as db:
+                db.auth(credentials["supabase_api_key"])
+
+                await create_table_if_not_exists(
+                    table_name="posts",
+                    columns_definition={
+                        "id": "SERIAL PRIMARY KEY",
+                        "author": "VARCHAR(255) NOT NULL",
+                        "title": "TEXT NOT NULL",
+                        "description": "TEXT",
+                        "date": "TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP",
+                        "likes": "INTEGER NOT NULL DEFAULT 0",
+                        "comments": "INTEGER NOT NULL DEFAULT 0",
+                        "link": "TEXT NOT NULL",
+                        "category": "VARCHAR(255) NOT NULL",
+                    },
+                    engine=db,
+                )
+
+        asyncio.run(create_table())
+
         # Connect to Supabase
         try:
             self.supabase = create_client(
-                credentials["supabase_url"], credentials["supabase_key"]
+                credentials["supabase_url"], credentials["supabase_api_key"]
             )
+
         except Exception as e:
             print(f"{Fore.RED}Error: {e}, could not create Supabase client.")
 
@@ -225,18 +279,6 @@ class Scraper:
                 }
             ]
         ).execute()
-
-
-class PostData:
-    def __init__(self, id, author, title, description, date, likes, comments, link):
-        self.id = id
-        self.author = author
-        self.title = title
-        self.description = description
-        self.date = date
-        self.likes = likes
-        self.comments = comments
-        self.link = link
 
 
 if __name__ == "__main__":
