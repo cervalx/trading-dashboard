@@ -2,38 +2,12 @@ import os
 import json
 from colorama import Fore, Style, Back, init
 import inquirer
-from inquirer.errors import ValidationError
-from email_validator import validate_email, EmailNotValidError
-from urllib.parse import urlparse
 from loguru import logger
 
 
 init(autoreset=True)
 # Get the directory of the current Python file
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-
-
-def validate_email_input(answers, current):
-    try:
-        validate_email(current)
-        return True
-    except EmailNotValidError as e:
-        raise ValidationError(
-            "",  # element name can be left blank
-            reason=str(e),
-        )
-
-
-def validate_url(answers, current):
-    """
-    Custom validator using the standard library's `urllib.parse`
-    to check if the user input is a valid URL-like string.
-    """
-    parsed_url = urlparse(current)
-    # A minimal check: require at least a scheme and a netloc
-    if not parsed_url.scheme or not parsed_url.netloc:
-        raise ValidationError("", reason="Please enter a valid URL.")
-    return True
 
 
 def get_supabase_credentials():
@@ -82,7 +56,9 @@ def set_credentials():
             choices=[
                 ("Supabase", "supabase-remote"),
                 ("Supabase Local via Docker", "supabase-local"),
+                ("Postgres Local", "postgres-local"),
                 ("Parquet(Binary Files)", "parquet"),
+                ("Sqlite3", "sqlite3"),
             ],
         )
     ]
@@ -91,14 +67,26 @@ def set_credentials():
 
     storage_credentials = {}
 
-    if storage_choice == "supabase-remote":
-        storage_credentials = get_supabase_credentials()
-    elif storage_choice == "supabase-local":
-        # TODO: it's probably a good idea to spin up a docker container before we get the credentials
-        storage_credentials = get_supabase_credentials()
-    if storage_choice == "parquet":
-        # TODO: using parquet for storage does not require any credentials so it's fine to not get any
-        pass
+    match storage_choice:
+        case "supabase-remote":
+            storage_credentials = get_supabase_credentials()
+        case "supabase-local":
+            # TODO: it's probably a good idea to spin up a docker container before we get the credentials
+            storage_credentials = get_supabase_credentials()
+        case "parquet":
+            # TODO: using parquet for storage does not require any credentials so it's fine to not get any
+            pass
+        case "sqlite3":
+            # TODO: implement sqlite3 storage
+            pass
+        case "postgres-local":
+            # TODO: implement postgres-local storage
+            pass
+        case _:
+            logger.error(
+                f"Storage choice {storage_choice} not implemented, but this should never happen."
+            )
+            raise ValueError(f"Storage choice {storage_choice} not implemented")
 
     # Prepare credentials as dictionary
     if all([trading_edge_credentials, storage_credentials]):
