@@ -1,13 +1,14 @@
 from playwright.sync_api import sync_playwright
-from credentials import get_credentials
 from supabase import create_client
-import datetime
 import time
 import re
 from colorama import init, Fore
 from postgrest import AsyncPostgrestClient
 import asyncio
 from loguru import logger
+from ..repository.supabase_repo import SupabaseRepository
+from .credentials import get_scraper_credentials, set_credentials
+import inquirer
 
 init(autoreset=True)
 
@@ -27,34 +28,6 @@ MAX_LOOKBACK_DAYS = (
 MIN_LOOKBACK_DAYS = 1
 
 
-async def create_table_if_not_exists(table_name, columns_definition, engine):
-    """
-    Creates a table in Supabase.
-
-    Args:
-        table_name: The name of the table to create.
-        columns_definition: A dictionary where keys are column names and values are SQL column definitions.
-    """
-    try:
-        # Construct the SQL CREATE TABLE statement
-        columns_sql = ", ".join(
-            [f"{name} {definition}" for name, definition in columns_definition.items()]
-        )
-        create_table_sql = f"CREATE TABLE IF NOT EXISTS {table_name} ({columns_sql})"
-
-        # Execute the SQL statement using the Supabase API (as a raw SQL query)
-        response = engine.rpc("executesql", {"sql": create_table_sql}).execute()
-
-        if response.status_code == 200:
-            logger.info(f"Table '{table_name}' created successfully!")
-        else:
-            logger.error(f"Error creating table '{table_name}':")
-            logger.error(response.data)  # Print the error details from Supabase
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
-
-
 # This class scrapes the posts from the given url and inserts them into the database
 # Run this class in a seperate thread or process
 # Example:
@@ -64,6 +37,7 @@ async def create_table_if_not_exists(table_name, columns_definition, engine):
 class Scraper:
     def __init__(
         self,
+        storage,
         url=URL_LIST["tearrepresentative56_activity_feed"],
         polling_rate=60 * 5,
         lookback_days=3,
@@ -82,41 +56,91 @@ class Scraper:
         self.isRunning = True
         self.page = None
         self.data = None
-        self.supabase = None
+        self.storage = None
+        self.website_credentials = {}
+
+    def build(self):
+        preloaded = False
+        scraper_credentials = get_scraper_credentials()
+        if "storage" in scraper_credentials and "website" in scraper_credentials:
+            # This means that the json file was found and credentials for the storage
+            # and website were found. If there was an old version of the config file
+            # we prompt again
+            storage_credentials = scraper_credentials["storage"]
+            storage_choice = storage_credentials.pop("storage_engine", None)
+            self.website_credentials = scraper_credentials.get("website")
+        else:
+            # credentials.json was not found so we need to initialize
+            self.website_credentials = scraper_credentials
+            storage_questions = [
+                inquirer.List(
+                    "storage",
+                    message="Where do you want to store the scraped data?",
+                    choices=[
+                        ("Supabase", "supabase-remote"),
+                        ("Supabase Local via Docker", "supabase-local"),
+                        ("Postgres Local", "postgres-local"),
+                        ("Parquet(Binary Files)", "parquet"),
+                        ("Sqlite3", "sqlite3"),
+                    ],
+                )
+            ]
+            storage_choice = inquirer.prompt(storage_questions)["storage"]
+        storage_config = {}
+        match storage_choice:
+            case "supabase-remote":
+                from ..repository.supabase_repo import SupabaseRepository
+
+                if preloaded:
+                    self.storage = SupabaseRepository(
+                        preloaded_credentials=storage_credentials
+                    )
+                else:
+                    self.storage = SupabaseRepository()
+                    storage_config = {
+                        "storage": {
+                            "storage_engine": "supabase-remote",
+                            "supabase_url": self.storage.creds.supabase_url,
+                            "supabase_api_key": self.storage.creds.supabase_api_key,
+                        }
+                    }
+
+            case "supabase-local":
+                from ..repository.supabase_repo import SupabaseRepository
+
+                if preloaded:
+                    self.storage = SupabaseRepository(
+                        preloaded_credentials=storage_credentials
+                    )
+                else:
+                    self.storage = SupabaseRepository()
+                    storage_config = {
+                        "storage": {
+                            "storage_engine": "supabase-remote",
+                            "supabase_url": self.storage.creds.supabase_url,
+                            "supabase_api_key": self.storage.creds.supabase_api_key,
+                        }
+                    }
+
+                # TODO: it's probably a good idea to spin up a docker container before we get the credentials
+            case "parquet":
+                # TODO: using parquet for storage does not require any credentials so it's fine to not get any
+                pass
+            case "sqlite3":
+                # TODO: implement sqlite3 storage
+                pass
+            case "postgres-local":
+                # TODO: implement postgres-local storage
+                pass
+            case _:
+                logger.error(
+                    f"Storage choice {storage_choice} not implemented, but this should never happen."
+                )
+                raise ValueError(f"Storage choice {storage_choice} not implemented")
+        set_credentials({"website": self.website_credentials}, storage_config)
 
     def run(self):
-        credentials = get_credentials()
-
-        async def create_table():
-            async with AsyncPostgrestClient(credentials["supabase_url"]) as db:
-                db.auth(credentials["supabase_api_key"])
-
-                await create_table_if_not_exists(
-                    table_name="posts",
-                    columns_definition={
-                        "id": "SERIAL PRIMARY KEY",
-                        "author": "VARCHAR(255) NOT NULL",
-                        "title": "TEXT NOT NULL",
-                        "description": "TEXT",
-                        "date": "TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP",
-                        "likes": "INTEGER NOT NULL DEFAULT 0",
-                        "comments": "INTEGER NOT NULL DEFAULT 0",
-                        "link": "TEXT NOT NULL",
-                        "category": "VARCHAR(255) NOT NULL",
-                    },
-                    engine=db,
-                )
-
-        asyncio.run(create_table())
-
         # Connect to Supabase
-        try:
-            self.supabase = create_client(
-                credentials["supabase_url"], credentials["supabase_api_key"]
-            )
-
-        except Exception as e:
-            print(f"{Fore.RED}Error: {e}, could not create Supabase client.")
 
         with sync_playwright() as p:
             # Launch browser
@@ -126,8 +150,10 @@ class Scraper:
             # Login and navigate to the desired url
             self.page = context.new_page()
             self.page.goto("https://tradingedge.club/sign_in", wait_until="networkidle")
-            self.page.fill('input[name="email"]', credentials["email"])
-            self.page.fill('input[name="password"]', credentials["password"])
+            self.page.fill('input[name="email"]', self.website_credentials["email"])
+            self.page.fill(
+                'input[name="password"]', self.website_credentials["password"]
+            )
             self.page.press('text="Sign In"', "Enter")
             self.page.wait_for_url("https://tradingedge.club/spaces/**")
             self.page.goto(self.url, wait_until="networkidle")
@@ -261,26 +287,10 @@ class Scraper:
 
     def add_post(self, id, author, title, description, likes, comments, link, category):
         # Insert the post to the database
-        self.supabase.table("posts").insert(
-            [
-                {
-                    "id": id,
-                    "author": author,
-                    "title": title,
-                    "description": description,
-                    # We do not use the posts date because it is not accurate (e.g. "Posted 1w ago")
-                    # This has the side effect that the posts will be inserted in the database with the current date even if they are older
-                    # But this is only a problem for the very first run of the scraper with an empyt database
-                    "date": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-                    "likes": int(likes),
-                    "comments": int(comments),
-                    "link": link,
-                    "category": category,
-                }
-            ]
-        ).execute()
+        pass
 
 
 if __name__ == "__main__":
-    scraper = Scraper(debug=True, headless=False)
+    scraper = Scraper(SupabaseRepository, debug=True, headless=False)
+    scraper.build()
     scraper.run()
