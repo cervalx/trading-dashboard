@@ -15,6 +15,7 @@ class PostData:
     likes: Optional[int] = None
     comments: Optional[int] = None
     link: Optional[str] = None
+    category: Optional[str] = None
 
     @model_validator(mode="after")
     @classmethod

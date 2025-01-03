@@ -78,22 +78,22 @@ class PrebuildHook(PostRepository, type):
 
 
 class SupabaseRepository(metaclass=PrebuildHook):
-    def __init__(self, storage, creds):
+    def __init__(self, storage, creds, preloaded_credentials=None):
         self.supabase = storage
         self.creds = creds
 
-    def create_post(self, **kwargs: PostData) -> bool:
+    def create_post(self, post: PostData) -> bool:
         self.supabase.table("posts").insert(
             [
                 {
+                    **post.__dict__,
                     "date": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-                    **kwargs,
                 }
             ]
         ).execute()
 
     def get_post_by_id(self, id: int) -> Optional[dict]:
-        pass
+        return self.supabase.table("posts").select("id").eq("id", id).execute().data
 
     def get_post(self, title: str) -> Optional[dict]:
         pass
@@ -101,8 +101,17 @@ class SupabaseRepository(metaclass=PrebuildHook):
     def get_all_posts(self) -> List[dict]:
         pass
 
-    def update_post(self, title: str, content: str, author: str) -> bool:
-        pass
+    def update_post(
+        self, id: str, title: str, description: str, likes: int, comments: int
+    ) -> bool:
+        self.supabase.table("posts").update(
+            {
+                "title": title,
+                "description": description,
+                "likes": int(likes),
+                "comments": int(comments),
+            }
+        ).eq("id", id).execute()
 
     def delete_post(self, title: str) -> bool:
         pass

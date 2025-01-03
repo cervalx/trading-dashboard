@@ -7,6 +7,7 @@ from postgrest import AsyncPostgrestClient
 import asyncio
 from loguru import logger
 from ..repository.supabase_repo import SupabaseRepository
+from ..repository.repository_interface import PostData
 from .credentials import get_scraper_credentials, set_credentials
 import inquirer
 
@@ -63,6 +64,7 @@ class Scraper:
         preloaded = False
         scraper_credentials = get_scraper_credentials()
         if "storage" in scraper_credentials and "website" in scraper_credentials:
+            preloaded = True
             # This means that the json file was found and credentials for the storage
             # and website were found. If there was an old version of the config file
             # we prompt again
@@ -95,6 +97,7 @@ class Scraper:
                     self.storage = SupabaseRepository(
                         preloaded_credentials=storage_credentials
                     )
+                    return
                 else:
                     self.storage = SupabaseRepository()
                     storage_config = {
@@ -112,6 +115,7 @@ class Scraper:
                     self.storage = SupabaseRepository(
                         preloaded_credentials=storage_credentials
                     )
+                    return
                 else:
                     self.storage = SupabaseRepository()
                     storage_config = {
@@ -257,15 +261,24 @@ class Scraper:
             )
 
             # Check if post exists already
-            post_exists = (
-                self.supabase.table("posts").select("id").eq("id", id).execute().data
-            )
+            post_exists = self.storage.get_post_by_id(id)
             if post_exists:
-                self.update_post(id, title, description, likes, comments)
+                self.storage.update_post(
+                    PostData(id=id, likes=likes, comments=comments)
+                )
                 number_updated_posts += 1
             else:
-                self.add_post(
-                    id, author, title, description, likes, comments, link, category
+                self.storage.create_post(
+                    PostData(
+                        id=id,
+                        author=author,
+                        title=title,
+                        description=description,
+                        likes=likes,
+                        comments=comments,
+                        link=link,
+                        category=category,
+                    )
                 )
                 number_new_posts += 1
 
@@ -274,20 +287,6 @@ class Scraper:
 
     # We can't just update the post by opening it's link and extracting the data
     # because when opening the link it renders an offcanvas where data like likes and comments are missing
-    def update_post(self, id, title, description, likes, comments):
-        # Update the post in the database (only update the fields that can change)
-        self.supabase.table("posts").update(
-            {
-                "title": title,
-                "description": description,
-                "likes": int(likes),
-                "comments": int(comments),
-            }
-        ).eq("id", id).execute()
-
-    def add_post(self, id, author, title, description, likes, comments, link, category):
-        # Insert the post to the database
-        pass
 
 
 if __name__ == "__main__":

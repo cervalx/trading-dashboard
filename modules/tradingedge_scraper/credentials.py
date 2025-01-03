@@ -34,7 +34,6 @@ def trading_edge_credentials_prompt():
 
 def set_credentials(website_credentials, storage_credentials):
     # Prepare credentials as dictionary
-    __import__("ipdb").set_trace()
     if all([website_credentials, storage_credentials]):
         credentials = {
             **website_credentials,
