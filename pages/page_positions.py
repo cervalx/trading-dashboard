@@ -82,8 +82,8 @@ else:
                 f"Storage choice {engine} not implemented, but this should never happen."
             )
             raise ValueError(f"Storage choice {engine} not implemented")
-    pd.DataFrame(feed)
-    st.dataframe(df)
+    feed_df = pd.DataFrame(feed)
+    st.dataframe(feed_df)
 
 
 st.divider()
