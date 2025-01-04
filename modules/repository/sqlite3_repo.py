@@ -76,7 +76,6 @@ class Sqlite3Repository(metaclass=PrebuildHook):
             cursor = conn.cursor()
             query = """SELECT * FROM POSTS WHERE id = ?"""
             results = cursor.execute(query, (id,))
-            conn.commit()
         return results.fetchone()
 
         # return self.supabase.table("posts").select("id").eq("id", id).execute().data
@@ -84,8 +83,13 @@ class Sqlite3Repository(metaclass=PrebuildHook):
     def get_post(self, title: str) -> Optional[dict]:
         pass
 
-    def get_all_posts(self) -> List[dict]:
-        pass
+    def get_feed(self) -> List[dict]:
+        results = None
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            query = """SELECT * FROM posts"""
+            results = cursor.execute(query)
+        return results.fetchall()
 
     def update_post(self, post: PostData) -> bool:
         with sqlite3.connect(self.db_path) as conn:

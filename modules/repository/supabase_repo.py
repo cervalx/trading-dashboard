@@ -98,8 +98,8 @@ class SupabaseRepository(metaclass=PrebuildHook):
     def get_post(self, title: str) -> Optional[dict]:
         pass
 
-    def get_all_posts(self) -> List[dict]:
-        pass
+    def get_feed(self) -> List[dict]:
+        return self.supabase.table("posts").select("*").execute()
 
     def update_post(self, post: PostData) -> bool:
         self.supabase.table("posts").update(

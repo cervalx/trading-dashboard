@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import yfinance as yf
 import json
@@ -5,6 +6,15 @@ from datetime import datetime, timedelta
 import plotly.graph_objects as go
 from modules.navigation import add_navigation
 from config import LOCAL_DIR
+from loguru import logger
+import pandas as pd
+import sys
+
+
+module_dir = os.path.abspath("modules")
+sys.path.append(module_dir)
+
+logger.info(module_dir)
 
 add_navigation()
 st.title("Positions")
@@ -49,6 +59,32 @@ fig.add_hline(
 
 # Display the chart
 st.plotly_chart(fig, use_container_width=True)
+
+st.divider()
+if not os.path.exists("./modules/tradingedge_scraper/credentials.json"):
+    st.write("Scraper was not initialized. Please run the scraper first.")
+else:
+    config = json.load(open("./modules/tradingedge_scraper/credentials.json"))
+    data = config.get("storage")
+    engine = data.pop("storage_engine")
+    repo = None
+    feed = {}
+    match engine:
+        case "sqlite3":
+            from modules.repository.sqlite3_repo import (
+                Sqlite3Repository,
+            )
+
+            repo = Sqlite3Repository(preloaded_credentials=data)
+            feed = repo.get_feed()
+        case _:
+            logger.error(
+                f"Storage choice {engine} not implemented, but this should never happen."
+            )
+            raise ValueError(f"Storage choice {engine} not implemented")
+    pd.DataFrame(feed)
+    st.dataframe(df)
+
 
 st.divider()
 st.subheader("Options Analysis")
