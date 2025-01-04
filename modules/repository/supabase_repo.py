@@ -101,15 +101,13 @@ class SupabaseRepository(metaclass=PrebuildHook):
     def get_all_posts(self) -> List[dict]:
         pass
 
-    def update_post(
-        self, id: str, title: str, description: str, likes: int, comments: int
-    ) -> bool:
+    def update_post(self, post: PostData) -> bool:
         self.supabase.table("posts").update(
             {
-                "title": title,
-                "description": description,
-                "likes": int(likes),
-                "comments": int(comments),
+                "title": post.title,
+                "description": post.description,
+                "likes": int(post.likes),
+                "comments": int(post.comments),
             }
         ).eq("id", id).execute()
 
@@ -117,27 +115,5 @@ class SupabaseRepository(metaclass=PrebuildHook):
         pass
 
 
-# class PreBuildHookMeta(type):
-#     def __call__(cls, *args, **kwargs):
-#         # Pre-object build hook logic
-#         print("Pre-object build hook (metaclass) executing...")
-#
-#         # Example: Modify arguments before calling the actual constructor
-#         modified_args = [arg.upper() for arg in args if isinstance(arg, str)]
-#         instance = super().__call__(*modified_args, **kwargs)
-#
-#         return instance
-#
-#
-# class MyClass(metaclass=PreBuildHookMeta):
-#     def __init__(self, data, other_arg=None):
-#         self.data = data
-#         self.other_arg = other_arg
-#         print("Object initialized")
-#
-#
-# # Usage
-# obj = MyClass("hello", other_arg=456)
-# print(obj.data)
 if __name__ == "__main__":
     obj = SupabaseRepository(preloaded_credentials={})

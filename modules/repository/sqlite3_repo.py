@@ -87,9 +87,7 @@ class Sqlite3Repository(metaclass=PrebuildHook):
     def get_all_posts(self) -> List[dict]:
         pass
 
-    def update_post(
-        self, id: str, title: str, description: str, likes: int, comments: int
-    ) -> bool:
+    def update_post(self, post: PostData) -> bool:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             query = """
@@ -99,7 +97,10 @@ class Sqlite3Repository(metaclass=PrebuildHook):
                     likes = ?,
                     comments = ?
             WHERE id = ?"""
-            cursor.execute(query, (title, description, likes, comments, id))
+            cursor.execute(
+                query,
+                (post.title, post.description, post.likes, post.comments, post.id),
+            )
             conn.commit()
 
     def delete_post(self, title: str) -> bool:
