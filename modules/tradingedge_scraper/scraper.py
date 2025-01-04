@@ -120,18 +120,33 @@ class Scraper:
                     self.storage = SupabaseRepository()
                     storage_config = {
                         "storage": {
-                            "storage_engine": "supabase-remote",
+                            "storage_engine": "supabase-local",
                             "supabase_url": self.storage.creds.supabase_url,
                             "supabase_api_key": self.storage.creds.supabase_api_key,
                         }
                     }
 
                 # TODO: it's probably a good idea to spin up a docker container before we get the credentials
-            case "parquet":
+            case "parquet-engine":
                 # TODO: using parquet for storage does not require any credentials so it's fine to not get any
                 pass
             case "sqlite3":
                 # TODO: implement sqlite3 storage
+                from ..repository.sqlite3_repo import Sqlite3Repository
+
+                if preloaded:
+                    self.storage = Sqlite3Repository(
+                        preloaded_credentials=storage_credentials
+                    )
+                    return
+                else:
+                    self.storage = Sqlite3Repository()
+                    storage_config = {
+                        "storage": {
+                            "storage_engine": "sqlite3",
+                            "sqlite3_file": self.storage.db_path,
+                        }
+                    }
                 pass
             case "postgres-local":
                 # TODO: implement postgres-local storage
@@ -254,6 +269,8 @@ class Scraper:
                 if post.query_selector(".feed-item-post")
                 else None
             )
+            if link is None:
+                continue
             category = category = (
                 post.query_selector(".post-tag-name").inner_text()
                 if post.query_selector(".post-tag-name")
