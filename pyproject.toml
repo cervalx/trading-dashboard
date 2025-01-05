@@ -19,7 +19,6 @@ email-validator = "^2.2.0"
 inquirer = "^3.4.0"
 prompt-toolkit = "^3.0.48"
 loguru = "^0.7.3"
-postgrest = "^0.19.1"
 pydantic = "^2.10.4"
 
 
