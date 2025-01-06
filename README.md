@@ -27,7 +27,7 @@ pip install -r requirements.txt
 ### Run scraper with
 
 ```sh
-poetry run python -m tradingedge.club_scraper
+poetry run python -m modules.tradingedge_scraper.scraper
 ````
 
 ### Community
