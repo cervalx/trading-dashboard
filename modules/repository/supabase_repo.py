@@ -9,6 +9,7 @@ from .repository_interface import PostRepository, PostData
 from supabase import create_client
 import sys
 from collections import namedtuple
+import pandas as pd
 
 
 init(autoreset=True)
@@ -99,7 +100,22 @@ class SupabaseRepository(metaclass=PrebuildHook):
         pass
 
     def get_feed(self) -> List[dict]:
-        return self.supabase.table("posts").select("*").execute()
+        response = (
+            self.supabase.table("posts")
+            .select(
+                "author",
+                "title",
+                "description",
+                "date",
+                "likes",
+                "comments",
+                "link",
+                "category",
+            )
+            .execute()
+        )
+        df = pd.DataFrame(response.data)
+        return df
 
     def update_post(self, post: PostData) -> bool:
         self.supabase.table("posts").update(
@@ -108,6 +124,23 @@ class SupabaseRepository(metaclass=PrebuildHook):
                 "description": post.description,
                 "likes": int(post.likes),
                 "comments": int(post.comments),
+            }
+        ).eq("id", id).execute()
+
+    def get_unprocessed_posts(self) -> List[dict]:
+        data = (
+            self.supabase.table("posts")
+            .select("id", "title", "description")
+            .eq("content_parsed", False)
+            .execute()
+            .data
+        )
+        return pd.DataFrame(data)
+
+    def update_post_tags(self, id, tickers_found) -> bool:
+        self.supabase.table("posts").update(
+            {
+                "tickers_notifications_sent": ", ".join(tickers_found),
             }
         ).eq("id", id).execute()
 

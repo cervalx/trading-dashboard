@@ -4,6 +4,11 @@ from config import LOCAL_DIR
 
 class Settings:
     @staticmethod
+    def get_setting(setting_name):
+        settings = Settings.load_settings()
+        return settings.get(setting_name)
+
+    @staticmethod
     def load_settings():
         # Load existing settings from JSON file
         try:

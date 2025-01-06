@@ -95,7 +95,6 @@ class Sqlite3Repository(metaclass=PrebuildHook):
     def get_feed(self) -> List[dict]:
         results = None
         with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
             query = """SELECT 
                     author, title, description,
                     date, likes, comments, link, category
@@ -117,6 +116,24 @@ class Sqlite3Repository(metaclass=PrebuildHook):
                 query,
                 (post.title, post.description, post.likes, post.comments, post.id),
             )
+            conn.commit()
+
+    def get_unprocessed_posts(self) -> List[dict]:
+        with sqlite3.connect(self.db_path) as conn:
+            query = """
+                SELECT id, title, description FROM posts WHERE content_parsed = FALSE
+            """
+            results = pd.read_sql_query(query, conn)
+        return results
+
+    def update_post_tags(self, id, tickers_found) -> bool:
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            query = """
+                UPDATE posts
+                SET tickers_notifications_sent = ?
+            WHERE id = ?"""
+            cursor.execute(query, (", ".join(tickers_found), id))
             conn.commit()
 
     def delete_post(self, title: str) -> bool:
