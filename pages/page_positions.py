@@ -14,7 +14,6 @@ import sys
 module_dir = os.path.abspath("modules")
 sys.path.append(module_dir)
 
-logger.info(module_dir)
 
 add_navigation()
 st.title("Positions")
@@ -70,6 +69,13 @@ else:
     repo = None
     feed = {}
     match engine:
+        case "supabase-local" | "supabase-remote":
+            from modules.repository.supabase_repo import (
+                SupabaseRepository,
+            )
+
+            repo = SupabaseRepository(preloaded_credentials=data)
+            feed = repo.get_feed()
         case "sqlite3":
             from modules.repository.sqlite3_repo import (
                 Sqlite3Repository,

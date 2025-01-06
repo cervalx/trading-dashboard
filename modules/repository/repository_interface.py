@@ -16,6 +16,8 @@ class PostData:
     comments: Optional[int] = None
     link: Optional[str] = None
     category: Optional[str] = None
+    content_parsed: Optional[bool] = None
+    ticker_notification_sent: Optional[str] = None
 
     @model_validator(mode="after")
     @classmethod

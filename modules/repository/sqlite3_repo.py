@@ -10,6 +10,7 @@ from .repository_interface import PostRepository, PostData
 
 import sys
 from collections import namedtuple
+import pandas as pd
 
 
 def get_credentials():
@@ -54,7 +55,9 @@ class Sqlite3Repository(metaclass=PrebuildHook):
                     likes INTEGER NOT NULL DEFAULT 0,
                     comments INTEGER NOT NULL DEFAULT 0,
                     link TEXT NOT NULL,
-                    category VARCHAR(255) NOT NULL
+                    category VARCHAR(255) NOT NULL,
+                    content_parsed BOOLEAN NOT NULL DEFAULT FALSE,
+                    ticker_notification_sent VARCHAR(10) NOT NULL DEFAULT 'no'
                 );""")
             conn.commit()
 
@@ -74,9 +77,15 @@ class Sqlite3Repository(metaclass=PrebuildHook):
         results = None
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
-            query = """SELECT * FROM POSTS WHERE id = ?"""
-            results = cursor.execute(query, (id,))
-        return results.fetchone()
+            query = """
+                SELECT
+                    author, title, description,
+                    date, likes, comments, link, category
+                FROM POSTS WHERE id = ?
+            """
+            params = (id,)
+            results = pd.read_sql_query(query, conn, params=params)
+        return results
 
         # return self.supabase.table("posts").select("id").eq("id", id).execute().data
 
@@ -87,9 +96,12 @@ class Sqlite3Repository(metaclass=PrebuildHook):
         results = None
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
-            query = """SELECT * FROM posts"""
-            results = cursor.execute(query)
-        return results.fetchall()
+            query = """SELECT 
+                    author, title, description,
+                    date, likes, comments, link, category
+            FROM posts"""
+            results = pd.read_sql_query(query, conn)
+        return results
 
     def update_post(self, post: PostData) -> bool:
         with sqlite3.connect(self.db_path) as conn:
