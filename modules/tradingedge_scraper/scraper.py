@@ -280,7 +280,6 @@ class Scraper:
             # Check if post exists already
             post_exists = self.storage.get_post_by_id(id)
             if post_exists:
-                __import__("ipdb").set_trace()
                 self.storage.update_post(
                     PostData(
                         id=id,
