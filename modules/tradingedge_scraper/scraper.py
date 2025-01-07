@@ -127,9 +127,6 @@ class Scraper:
                     }
 
                 # TODO: it's probably a good idea to spin up a docker container before we get the credentials
-            case "parquet-engine":
-                # TODO: using parquet for storage does not require any credentials so it's fine to not get any
-                pass
             case "sqlite3":
                 # TODO: implement sqlite3 storage
                 from ..repository.sqlite3_repo import Sqlite3Repository
@@ -147,9 +144,6 @@ class Scraper:
                             "sqlite3_file": self.storage.db_path,
                         }
                     }
-                pass
-            case "postgres-local":
-                # TODO: implement postgres-local storage
                 pass
             case _:
                 logger.error(
