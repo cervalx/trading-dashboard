@@ -47,7 +47,7 @@ class Sqlite3Repository(metaclass=PrebuildHook):
             cursor = conn.cursor()
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS posts (
-                    id SERIAL PRIMARY KEY,
+                    id PRIMARY KEY,
                     author VARCHAR(255) NOT NULL,
                     title TEXT,
                     description TEXT,
@@ -57,7 +57,8 @@ class Sqlite3Repository(metaclass=PrebuildHook):
                     link TEXT NOT NULL,
                     category VARCHAR(255) NOT NULL,
                     content_parsed BOOLEAN NOT NULL DEFAULT FALSE,
-                    ticker_notification_sent VARCHAR(10) NOT NULL DEFAULT 'no'
+                    ticker_notification_sent VARCHAR(10) NOT NULL DEFAULT 'no',
+                    found_tickers TEXT NOT NULL DEFAULT 'none'
                 );""")
             conn.commit()
 
@@ -68,12 +69,21 @@ class Sqlite3Repository(metaclass=PrebuildHook):
                 **post.__dict__,
                 "date": datetime.datetime.now(datetime.timezone.utc).isoformat(),
             }
+            for field_name in [
+                "content_parsed",
+                "ticker_notification_sent",
+                "found_tickers",
+            ]:
+                insert_data.pop(field_name)
             values_queries = ", ".join(["?"] * len(insert_data.keys()))
             query = f"""INSERT INTO POSTS ({', '.join(insert_data.keys())}) VALUES ({ values_queries } )"""
-            cursor.execute(query, tuple([m for m in insert_data.values()]))
+            try:
+                cursor.execute(query, tuple([m for m in insert_data.values()]))
+            except sqlite3.IntegrityError as e:
+                logger.error(f"Error inserting post: {e}")
             conn.commit()
 
-    def get_post_by_id(self, id: int) -> Optional[dict]:
+    def post_exists(self, id: int) -> bool:
         results = None
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
@@ -85,7 +95,7 @@ class Sqlite3Repository(metaclass=PrebuildHook):
             """
             params = (id,)
             results = pd.read_sql_query(query, conn, params=params)
-        return results
+        return not results.empty
 
         # return self.supabase.table("posts").select("id").eq("id", id).execute().data
 
@@ -121,19 +131,23 @@ class Sqlite3Repository(metaclass=PrebuildHook):
     def get_unprocessed_posts(self) -> List[dict]:
         with sqlite3.connect(self.db_path) as conn:
             query = """
-                SELECT id, title, description FROM posts WHERE content_parsed = FALSE
+                SELECT id, title, description, link FROM posts WHERE content_parsed = FALSE
             """
             results = pd.read_sql_query(query, conn)
         return results
 
-    def update_post_tags(self, id, tickers_found) -> bool:
+    def update_post_tags(self, id, watched_tickers, found_tickers) -> bool:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             query = """
                 UPDATE posts
-                SET tickers_notifications_sent = ?
+                SET content_parsed = TRUE,
+                    ticker_notification_sent = ?,
+                    found_tickers = ?
             WHERE id = ?"""
-            cursor.execute(query, (", ".join(tickers_found), id))
+            cursor.execute(
+                query, (", ".join(watched_tickers), ", ".join(found_tickers), id)
+            )
             conn.commit()
 
     def delete_post(self, title: str) -> bool:

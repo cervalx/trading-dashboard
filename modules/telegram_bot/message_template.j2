@@ -1,0 +1,10 @@
+<b>Latest Stock Updates:</b>
+
+{% for post in posts %}
+<b style="color=red"> {{ post.ticker }} </b> ===> <b><i> {{ post.title }} </i></b>
+{% if link is not none %}
+    link to post: {{ post.link }}
+{% else %}
+    link to post was not scraped.
+{% endif %}
+{% endfor %}

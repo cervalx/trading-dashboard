@@ -93,8 +93,11 @@ class SupabaseRepository(metaclass=PrebuildHook):
             ]
         ).execute()
 
-    def get_post_by_id(self, id: int) -> Optional[dict]:
-        return self.supabase.table("posts").select("id").eq("id", id).execute().data
+    def post_exists(self, id: int) -> bool:
+        df = pd.DataFrame(
+            self.supabase.table("posts").select("id").eq("id", id).execute().data
+        )
+        return not df.empty
 
     def get_post(self, title: str) -> Optional[dict]:
         pass
@@ -130,17 +133,18 @@ class SupabaseRepository(metaclass=PrebuildHook):
     def get_unprocessed_posts(self) -> List[dict]:
         data = (
             self.supabase.table("posts")
-            .select("id", "title", "description")
+            .select("id", "title", "description", "link")
             .eq("content_parsed", False)
             .execute()
             .data
         )
         return pd.DataFrame(data)
 
-    def update_post_tags(self, id, tickers_found) -> bool:
+    def update_post_tags(self, id, watched_tickers, found_tickers) -> bool:
         self.supabase.table("posts").update(
             {
-                "tickers_notifications_sent": ", ".join(tickers_found),
+                "tickers_notifications_sent": ", ".join(watched_tickers),
+                "tickers_found": ", ".join(found_tickers),
             }
         ).eq("id", id).execute()
 

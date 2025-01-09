@@ -18,12 +18,19 @@ class PostData:
     category: Optional[str] = None
     content_parsed: Optional[bool] = None
     ticker_notification_sent: Optional[str] = None
+    found_tickers: Optional[str] = None
 
     @model_validator(mode="after")
     @classmethod
     def warn_if_null(cls, values):
         for key, value in values.__dict__.items():
-            if value is None and key not in ["id"]:
+            if value is None and key not in [
+                "id",
+                "ticker_notification_sent",
+                "found_tickers",
+                "content_parsed",
+                "date",
+            ]:
                 logger.warning(f"{key} is null")
         return values
 
@@ -38,7 +45,7 @@ class PostRepository(ABC):
         pass
 
     @abstractmethod
-    def get_post_by_id(self, id: int) -> Optional[dict]:
+    def post_exists(self, id: int) -> Optional[dict]:
         pass
 
     @abstractmethod

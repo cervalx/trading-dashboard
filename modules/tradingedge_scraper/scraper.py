@@ -272,7 +272,7 @@ class Scraper:
             )
 
             # Check if post exists already
-            post_exists = self.storage.get_post_by_id(id)
+            post_exists = self.storage.post_exists(id)
             if post_exists:
                 self.storage.update_post(
                     PostData(

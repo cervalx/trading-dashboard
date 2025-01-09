@@ -1,15 +1,21 @@
 import json
 from config import LOCAL_DIR
+from loguru import logger
 
 
 class Settings:
     @staticmethod
-    def get_setting(setting_name):
-        settings = Settings.load_settings()
-        return settings.get(setting_name)
+    def fetch_tickers_list() -> list[str]:
+        logger.warning("TODO: Currently is not implemented")
+        return ["AAPL", "TSLA", "NVDA", "AMD", "COKE", "ARM", "F"]  # Example list
 
     @staticmethod
-    def load_settings():
+    def get_setting(setting_name) -> str | list[str] | dict:
+        settings = Settings.load_settings()
+        return settings.get(setting_name, "")
+
+    @staticmethod
+    def load_settings() -> dict:
         # Load existing settings from JSON file
         try:
             with open(f"{LOCAL_DIR}/settings.json", "r") as f:
