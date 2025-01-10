@@ -10,58 +10,13 @@ from loguru import logger
 import pandas as pd
 import sys
 
-
 module_dir = os.path.abspath("modules")
 sys.path.append(module_dir)
 
-
 add_navigation()
-st.title("Positions")
+st.title("Trading Edge Scraper")
+st.subheader("All recent posts")
 
-current_positions = json.load(open(f"{LOCAL_DIR}/settings.json"))["current_positions"]
-tickers = [position["Ticker"] for position in current_positions]
-selected_position = st.selectbox("Select position", tickers)
-position_data = next(
-    pos for pos in current_positions if pos["Ticker"] == selected_position
-)
-
-# Fetch NVDA stock data for the last year
-end_date = datetime.now()
-start_date = end_date - timedelta(days=365)
-
-df = yf.Ticker(selected_position).history(start=start_date, end=end_date)
-
-# Create candlestick chart
-fig = go.Figure(
-    data=[
-        go.Candlestick(
-            x=df.index,
-            open=df["Open"],
-            high=df["High"],
-            low=df["Low"],
-            close=df["Close"],
-        )
-    ]
-)
-
-fig.update_layout(
-    title=f"{selected_position} Stock Price - Last 12 Months",
-    yaxis_title="Stock Price (USD)",
-    xaxis_title="Date",
-    xaxis_rangeslider_visible=False,
-)
-
-# draw horizontal line at the average price
-fig.add_hline(
-    y=position_data["AvgPrice"], line_dash="dash", line_color="green", line_width=1
-)
-
-# Display the chart
-st.plotly_chart(fig, use_container_width=True)
-
-st.divider()
-# TODO: hide backend code
-# TODO: show only posts about ticker (feed[label] = selected_position)
 if not os.path.exists("./modules/tradingedge_scraper/credentials.json"):
     st.write("Scraper was not initialized. Please run the scraper first.")
 else:
@@ -91,6 +46,7 @@ else:
             )
             raise ValueError(f"Storage choice {engine} not implemented")
     feed_df = pd.DataFrame(feed)
+
     # organise columns first: title, author, link
     first_columns = ["title", "description", "link"]
     feed_df = feed_df[first_columns + [col for col in feed_df.columns if col not in first_columns]]
@@ -100,9 +56,3 @@ else:
     st.dataframe(feed_df, column_config={"link": st.column_config.LinkColumn()})
 
 st.divider()
-st.subheader("Options Analysis")
-# Link to https://mztrading.netlify.app/options/analyze/NVDA
-st.write(f"Link to https://mztrading.netlify.app/options/analyze/{selected_position}")
-
-st.divider()
-# TODO: add posts about ticker
