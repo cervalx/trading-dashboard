@@ -83,7 +83,7 @@ class SupabaseRepository(metaclass=PrebuildHook):
         self.supabase = storage
         self.creds = creds
 
-    def create_post(self, post: PostData) -> bool:
+    def create_post(self, post: PostData):
         self.supabase.table("posts").insert(
             [
                 {
@@ -99,10 +99,7 @@ class SupabaseRepository(metaclass=PrebuildHook):
         )
         return not df.empty
 
-    def get_post(self, title: str) -> Optional[dict]:
-        pass
-
-    def get_feed(self) -> List[dict]:
+    def get_feed(self) -> pd.DataFrame:
         response = (
             self.supabase.table("posts")
             .select(
@@ -120,7 +117,7 @@ class SupabaseRepository(metaclass=PrebuildHook):
         df = pd.DataFrame(response.data)
         return df
 
-    def update_post(self, post: PostData) -> bool:
+    def update_post(self, post: PostData):
         self.supabase.table("posts").update(
             {
                 "title": post.title,
@@ -130,27 +127,20 @@ class SupabaseRepository(metaclass=PrebuildHook):
             }
         ).eq("id", id).execute()
 
-    def get_unprocessed_posts(self) -> List[dict]:
+    def get_unprocessed_posts(self) -> pd.DataFrame:
         data = (
             self.supabase.table("posts")
-            .select("id", "title", "description", "link")
+            .select("id", "title", "link", "tickers_notifications_sent")
             .eq("content_parsed", False)
             .execute()
             .data
         )
         return pd.DataFrame(data)
 
-    def update_post_tags(self, id, watched_tickers, found_tickers) -> bool:
+    def update_post_tags(self, id, watched_tickers, found_tickers):
         self.supabase.table("posts").update(
             {
                 "tickers_notifications_sent": ", ".join(watched_tickers),
                 "tickers_found": ", ".join(found_tickers),
             }
         ).eq("id", id).execute()
-
-    def delete_post(self, title: str) -> bool:
-        pass
-
-
-if __name__ == "__main__":
-    obj = SupabaseRepository(preloaded_credentials={})

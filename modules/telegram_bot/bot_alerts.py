@@ -12,9 +12,6 @@ import sys
 
 telegram_bot_token = Settings.get_setting("telegram_bot_token")
 telegram_chat_id = Settings.get_setting("telegram_chat_id")
-ticker_watchlist = Settings.get_setting("watchlist_positions") + ["BTC"]
-# TODO: requires proper implementation
-all_tickers_list = Settings.fetch_tickers_list() + ["BTC"]
 
 logger.remove()
 logger.add(
@@ -37,39 +34,6 @@ async def send_update(chat_id: str, context: ContextTypes.DEFAULT_TYPE, data) ->
     )
 
 
-def find_tickers_in_text(
-    article_text, valid_tickers=all_tickers_list, watchlist_positions=ticker_watchlist
-):
-    # Basic uppercase pattern (1-5 letters)
-    possible_tickers = re.findall(r"(?:^|\b)[A-Z]{1,7}(?:\b|$)", article_text)
-
-    # Filter by known valid tickers
-    found = [t for t in possible_tickers if t in valid_tickers]
-    watched = [t for t in found if t in watchlist_positions]
-    return list(set(watched)), list(set(found))
-    # remove duplicates if needed
-
-
-def process_row(row):
-    id_ = row["id"]
-    title = row.get("title", "") if pd.notna(row["title"]) else ""
-    description = row.get("description", "") if pd.notna(row["description"]) else ""
-    link = row["link"]
-
-    all_text = " ".join([title, description])  # Combine title and description
-    notifiable_tickers, found_tickers = find_tickers_in_text(all_text)
-
-    return (id_, notifiable_tickers, found_tickers, title, link)
-
-
-def parse_posts(dataframe):
-    results = []
-    for _index, row in dataframe.iterrows():
-        procced = process_row(row)
-        results.append(procced)
-    return results
-
-
 async def main():
     global telegram_chat_id
     global telegram_bot_token
@@ -86,12 +50,10 @@ async def main():
 
             repo = SupabaseRepository(preloaded_credentials=data)
             unprocessed = repo.get_unprocessed_posts()
-            updateable = parse_posts(unprocessed)
             msg_data = []
-            for id_, watched_tickers, found_tickers, title, link in updateable:
-                logger.info(f"Updating post {id_}")
-                repo.update_post_tags(id_, watched_tickers, found_tickers)
-                if len(watched_tickers) > 0:
+            for id_, watched_tickers, title, link in unprocessed:
+                repo.update_post_tags(id_)
+                if len(watched_tickers.split(",")) > 0:
                     msg_data.append(
                         {
                             "ticker": watched_tickers,
@@ -108,15 +70,14 @@ async def main():
 
             repo = Sqlite3Repository(preloaded_credentials=data)
             unprocessed = repo.get_unprocessed_posts()
-            updateable = parse_posts(unprocessed)
             msg_data = []
-            for id_, watched_tickers, found_tickers, title, link in updateable:
+            for id_, watched_tickers, title, link in unprocessed:
                 logger.info(f"Updating post {id_}")
-                repo.update_post_tags(id_, watched_tickers, found_tickers)
-                if len(watched_tickers) > 0:
+                repo.update_post_tags(id_)
+                if len(watched_tickers.split(",")) > 0:
                     msg_data.append(
                         {
-                            "ticker": ", ".join(watched_tickers),
+                            "ticker": watched_tickers,
                             "title": title,
                             "link": link,
                         },

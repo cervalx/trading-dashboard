@@ -3,17 +3,18 @@ from typing import Optional, List
 from pydantic.dataclasses import dataclass
 from pydantic import model_validator, ValidationError
 from loguru import logger
+import pandas as pd
 
 
 @dataclass
 class PostData:
-    id: Optional[int] = None
+    likes: int
+    comments: int
+    id: int
     author: Optional[str] = None
     title: Optional[str] = None
     description: Optional[str] = None
     date: Optional[str] = None
-    likes: Optional[int] = None
-    comments: Optional[int] = None
     link: Optional[str] = None
     category: Optional[str] = None
     content_parsed: Optional[bool] = None
@@ -41,25 +42,25 @@ class PostRepository(ABC):
         pass
 
     @abstractmethod
-    def create_post(self, **kwargs: PostData) -> bool:
+    def create_post(self, **kwargs: PostData):
         pass
 
     @abstractmethod
-    def post_exists(self, id: int) -> Optional[dict]:
+    def post_exists(self, id: int) -> bool:
         pass
 
     @abstractmethod
-    def get_post(self, title: str) -> Optional[dict]:
+    def get_feed(self, title: str) -> pd.DataFrame:
         pass
 
     @abstractmethod
-    def get_all_posts(self) -> List[dict]:
+    def update_post(self, post: PostData) -> bool:
         pass
 
     @abstractmethod
-    def update_post(self, title: str, content: str, author: str) -> bool:
+    def get_unprocessed_posts(self) -> pd.DataFrame:
         pass
 
     @abstractmethod
-    def delete_post(self, title: str) -> bool:
+    def update_post_tags(self, id: str):
         pass

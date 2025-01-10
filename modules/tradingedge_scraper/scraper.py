@@ -3,13 +3,14 @@ from supabase import create_client
 import time
 import re
 from colorama import init, Fore
-from postgrest import AsyncPostgrestClient
 import asyncio
 from loguru import logger
 from ..repository.supabase_repo import SupabaseRepository
 from ..repository.repository_interface import PostData
 from .credentials import get_scraper_credentials, set_credentials
 import inquirer
+from modules.settings import Settings
+import pandas as pd
 
 init(autoreset=True)
 
@@ -27,6 +28,44 @@ MAX_LOOKBACK_DAYS = (
     6  # 7 is already considered a week, posts older than 6 days are obsolete anyway
 )
 MIN_LOOKBACK_DAYS = 1
+
+
+ticker_watchlist = Settings.get_setting("watchlist_positions") + ["BTC"]
+# TODO: requires proper implementation
+all_tickers_list = Settings.fetch_tickers_list() + ["BTC"]
+
+
+def find_tickers_in_text(
+    article_text, valid_tickers=all_tickers_list, watchlist_positions=ticker_watchlist
+):
+    # Basic uppercase pattern (1-5 letters)
+    possible_tickers = re.findall(r"(?:^|\b)[A-Z]{1,7}(?:\b|$)", article_text)
+
+    # Filter by known valid tickers
+    found = [t for t in possible_tickers if t in valid_tickers]
+    watched = [t for t in found if t in watchlist_positions]
+    return list(set(watched)), list(set(found))
+    # remove duplicates if needed
+
+
+def process_row(row):
+    id_ = row["id"]
+    title = row.get("title", "") if pd.notna(row["title"]) else ""
+    description = row.get("description", "") if pd.notna(row["description"]) else ""
+    link = row["link"]
+
+    all_text = " ".join([title, description])  # Combine title and description
+    notifiable_tickers, found_tickers = find_tickers_in_text(all_text)
+
+    return (id_, notifiable_tickers, found_tickers, title, link)
+
+
+def parse_posts(dataframe):
+    results = []
+    for _index, row in dataframe.iterrows():
+        procced = process_row(row)
+        results.append(procced)
+    return results
 
 
 # This class scrapes the posts from the given url and inserts them into the database
@@ -271,6 +310,11 @@ class Scraper:
                 else None
             )
 
+            title_str = title if title else ""
+            description_str = description if description else ""
+            found_tickers, watched_tickers = find_tickers_in_text(
+                f"{title_str} {description_str}"
+            )
             # Check if post exists already
             post_exists = self.storage.post_exists(id)
             if post_exists:
@@ -281,6 +325,8 @@ class Scraper:
                         description=description,
                         likes=likes,
                         comments=comments,
+                        ticker_notification_sent=", ".join(watched_tickers),
+                        found_tickers=", ".join(found_tickers),
                     )
                 )
                 number_updated_posts += 1
@@ -295,6 +341,8 @@ class Scraper:
                         comments=comments,
                         link=link,
                         category=category,
+                        ticker_notification_sent=", ".join(watched_tickers),
+                        found_tickers=", ".join(found_tickers),
                     )
                 )
                 number_new_posts += 1
@@ -307,6 +355,6 @@ class Scraper:
 
 
 if __name__ == "__main__":
-    scraper = Scraper(SupabaseRepository, debug=True)
+    scraper = Scraper(SupabaseRepository, debug=True, headless=True)
     scraper.build()
     scraper.run()

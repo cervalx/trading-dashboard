@@ -62,7 +62,7 @@ class Sqlite3Repository(metaclass=PrebuildHook):
                 );""")
             conn.commit()
 
-    def create_post(self, post: PostData) -> bool:
+    def create_post(self, post: PostData):
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             insert_data = {
@@ -86,7 +86,6 @@ class Sqlite3Repository(metaclass=PrebuildHook):
     def post_exists(self, id: int) -> bool:
         results = None
         with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
             query = """
                 SELECT
                     author, title, description,
@@ -97,12 +96,7 @@ class Sqlite3Repository(metaclass=PrebuildHook):
             results = pd.read_sql_query(query, conn, params=params)
         return not results.empty
 
-        # return self.supabase.table("posts").select("id").eq("id", id).execute().data
-
-    def get_post(self, title: str) -> Optional[dict]:
-        pass
-
-    def get_feed(self) -> List[dict]:
+    def get_feed(self) -> pd.DataFrame:
         results = None
         with sqlite3.connect(self.db_path) as conn:
             query = """SELECT 
@@ -112,7 +106,7 @@ class Sqlite3Repository(metaclass=PrebuildHook):
             results = pd.read_sql_query(query, conn)
         return results
 
-    def update_post(self, post: PostData) -> bool:
+    def update_post(self, post: PostData):
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             query = """
@@ -128,30 +122,23 @@ class Sqlite3Repository(metaclass=PrebuildHook):
             )
             conn.commit()
 
-    def get_unprocessed_posts(self) -> List[dict]:
+    def get_unprocessed_posts(self) -> pd.DataFrame:
         with sqlite3.connect(self.db_path) as conn:
             query = """
-                SELECT id, title, description, link FROM posts WHERE content_parsed = FALSE
+                SELECT id, title, description, link, ticker_notification_sent FROM posts WHERE content_parsed = FALSE
             """
             results = pd.read_sql_query(query, conn)
         return results
 
-    def update_post_tags(self, id, watched_tickers, found_tickers) -> bool:
+    def update_post_tags(self, id):
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             query = """
                 UPDATE posts
                 SET content_parsed = TRUE,
-                    ticker_notification_sent = ?,
-                    found_tickers = ?
             WHERE id = ?"""
-            cursor.execute(
-                query, (", ".join(watched_tickers), ", ".join(found_tickers), id)
-            )
+            cursor.execute(query, (id))
             conn.commit()
-
-    def delete_post(self, title: str) -> bool:
-        pass
 
 
 if __name__ == "__main__":
