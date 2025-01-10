@@ -307,6 +307,6 @@ class Scraper:
 
 
 if __name__ == "__main__":
-    scraper = Scraper(SupabaseRepository, debug=True, headless=False)
+    scraper = Scraper(SupabaseRepository, debug=True)
     scraper.build()
     scraper.run()
