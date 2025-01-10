@@ -13,26 +13,12 @@ from collections import namedtuple
 import pandas as pd
 
 
-def get_credentials():
-    # Get Supabase credentials
-    sqlite3_prompts = [
-        inquirer.Text("sqlite3_file", message="Enter the Sqlite DB path"),
-    ]
-    print(
-        f"""{os.linesep}{Fore.YELLOW}
-        To access the database you need to set a path for the file to be created.{os.linesep}
-        {os.linesep}
-        """
-    )
-    return inquirer.prompt(sqlite3_prompts)
-
-
 class PrebuildHook(PostRepository, type):
     def __call__(cls, *args, **kwargs):
         logger.info("Pre-object build hook (metaclass) executing...")
-        credentials = kwargs.get("preloaded_credentials", None)
-        if credentials is None:
-            credentials = get_credentials()
+        credentials = kwargs.get(
+            "preloaded_credentials", {"sqlite3_file": "./local/scraper.db"}
+        )
         storage = credentials["sqlite3_file"]
 
         instance = super().__call__(storage, *args, **kwargs)
