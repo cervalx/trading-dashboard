@@ -10,7 +10,7 @@ import pandas as pd
 class PostData:
     likes: int
     comments: int
-    id: int
+    id: str
     author: Optional[str] = None
     title: Optional[str] = None
     description: Optional[str] = None

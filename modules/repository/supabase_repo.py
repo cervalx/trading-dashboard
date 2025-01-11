@@ -111,6 +111,8 @@ class SupabaseRepository(metaclass=PrebuildHook):
                 "comments",
                 "link",
                 "category",
+                "tickers_notifications_sent",
+                "found_tickers",
             )
             .execute()
         )
@@ -137,10 +139,7 @@ class SupabaseRepository(metaclass=PrebuildHook):
         )
         return pd.DataFrame(data)
 
-    def update_post_tags(self, id, watched_tickers, found_tickers):
-        self.supabase.table("posts").update(
-            {
-                "tickers_notifications_sent": ", ".join(watched_tickers),
-                "tickers_found": ", ".join(found_tickers),
-            }
-        ).eq("id", id).execute()
+    def update_post_tags(self, id):
+        self.supabase.table("posts").update({"content_parsed": True}).eq(
+            "id", id
+        ).execute()

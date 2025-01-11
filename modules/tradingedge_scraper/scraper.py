@@ -11,8 +11,17 @@ from .credentials import get_scraper_credentials, set_credentials
 import inquirer
 from modules.settings import Settings
 import pandas as pd
+import sys
 
 init(autoreset=True)
+
+logger.remove()
+logger.add(
+    sys.stderr,
+    format="<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <cyan>{level: <8}</cyan> | <yellow>{name}:{function}:{line}</yellow> - {message}",
+    colorize=True,
+    level="DEBUG",
+)
 
 URL_LIST = {
     "personal_feed": "https://tradingedge.club/feed?sort=newest",
@@ -323,8 +332,8 @@ class Scraper:
                         id=id,
                         title=title,
                         description=description,
-                        likes=likes,
-                        comments=comments,
+                        likes=int(likes),
+                        comments=int(comments),
                         ticker_notification_sent=", ".join(watched_tickers),
                         found_tickers=", ".join(found_tickers),
                     )
@@ -337,8 +346,8 @@ class Scraper:
                         author=author,
                         title=title,
                         description=description,
-                        likes=likes,
-                        comments=comments,
+                        likes=int(likes),
+                        comments=int(comments),
                         link=link,
                         category=category,
                         ticker_notification_sent=", ".join(watched_tickers),

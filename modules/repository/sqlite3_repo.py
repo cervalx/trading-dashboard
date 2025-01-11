@@ -57,8 +57,8 @@ class Sqlite3Repository(metaclass=PrebuildHook):
                     link TEXT NOT NULL,
                     category VARCHAR(255) NOT NULL,
                     content_parsed BOOLEAN NOT NULL DEFAULT FALSE,
-                    ticker_notification_sent VARCHAR(10) NOT NULL DEFAULT 'no',
-                    found_tickers TEXT NOT NULL DEFAULT 'none'
+                    ticker_notification_sent VARCHAR(100) DEFAULT NULL,
+                    found_tickers TEXT DEFAULT NULL
                 );""")
             conn.commit()
 
@@ -71,8 +71,6 @@ class Sqlite3Repository(metaclass=PrebuildHook):
             }
             for field_name in [
                 "content_parsed",
-                "ticker_notification_sent",
-                "found_tickers",
             ]:
                 insert_data.pop(field_name)
             values_queries = ", ".join(["?"] * len(insert_data.keys()))
@@ -101,7 +99,7 @@ class Sqlite3Repository(metaclass=PrebuildHook):
         with sqlite3.connect(self.db_path) as conn:
             query = """SELECT 
                     author, title, description,
-                    date, likes, comments, link, category
+                    date, likes, comments, link, category, ticker_notification_sent, found_tickers
             FROM posts"""
             results = pd.read_sql_query(query, conn)
         return results
@@ -125,7 +123,7 @@ class Sqlite3Repository(metaclass=PrebuildHook):
     def get_unprocessed_posts(self) -> pd.DataFrame:
         with sqlite3.connect(self.db_path) as conn:
             query = """
-                SELECT id, title, description, link, ticker_notification_sent FROM posts WHERE content_parsed = FALSE
+                SELECT id, title, link, ticker_notification_sent FROM posts WHERE content_parsed = FALSE
             """
             results = pd.read_sql_query(query, conn)
         return results
@@ -135,9 +133,9 @@ class Sqlite3Repository(metaclass=PrebuildHook):
             cursor = conn.cursor()
             query = """
                 UPDATE posts
-                SET content_parsed = TRUE,
+                SET content_parsed = TRUE
             WHERE id = ?"""
-            cursor.execute(query, (id))
+            cursor.execute(query, (id,))
             conn.commit()
 
 
