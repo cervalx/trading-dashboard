@@ -57,26 +57,6 @@ def find_tickers_in_text(
     # remove duplicates if needed
 
 
-def process_row(row):
-    id_ = row["id"]
-    title = row.get("title", "") if pd.notna(row["title"]) else ""
-    description = row.get("description", "") if pd.notna(row["description"]) else ""
-    link = row["link"]
-
-    all_text = " ".join([title, description])  # Combine title and description
-    notifiable_tickers, found_tickers = find_tickers_in_text(all_text)
-
-    return (id_, notifiable_tickers, found_tickers, title, link)
-
-
-def parse_posts(dataframe):
-    results = []
-    for _index, row in dataframe.iterrows():
-        procced = process_row(row)
-        results.append(procced)
-    return results
-
-
 # This class scrapes the posts from the given url and inserts them into the database
 # Run this class in a seperate thread or process
 # Example:
@@ -321,9 +301,11 @@ class Scraper:
 
             title_str = title if title else ""
             description_str = description if description else ""
-            found_tickers, watched_tickers = find_tickers_in_text(
+            watched_tickers, found_tickers = find_tickers_in_text(
                 f"{title_str} {description_str}"
             )
+            logger.debug(found_tickers)
+            logger.debug(watched_tickers)
             # Check if post exists already
             post_exists = self.storage.post_exists(id)
             if post_exists:
