@@ -102,6 +102,9 @@ class Sqlite3Repository(metaclass=PrebuildHook):
                     date, likes, comments, link, category, ticker_notification_sent, found_tickers
             FROM posts"""
             results = pd.read_sql_query(query, conn)
+            results.rename(
+                {"ticker_notification_sent": "watched_tickers"}, axis=1, inplace=True
+            )
         return results
 
     def update_post(self, post: PostData):

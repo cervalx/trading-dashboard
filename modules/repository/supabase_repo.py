@@ -117,6 +117,9 @@ class SupabaseRepository(metaclass=PrebuildHook):
             .execute()
         )
         df = pd.DataFrame(response.data)
+        df.rename(
+            columns={"tickers_notifications_sent": "watched_tickers"}, inplace=True
+        )
         return df
 
     def update_post(self, post: PostData):
