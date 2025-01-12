@@ -106,7 +106,7 @@ class SupabaseRepository(metaclass=PrebuildHook):
                 "author",
                 "title",
                 "description",
-                "date",
+                "posted_date",
                 "likes",
                 "comments",
                 "link",

@@ -51,6 +51,7 @@ class Sqlite3Repository(metaclass=PrebuildHook):
                     author VARCHAR(255) NOT NULL,
                     title TEXT,
                     description TEXT,
+                    posted_date TEXT,
                     date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
                     likes INTEGER NOT NULL DEFAULT 0,
                     comments INTEGER NOT NULL DEFAULT 0,
@@ -99,7 +100,7 @@ class Sqlite3Repository(metaclass=PrebuildHook):
         with sqlite3.connect(self.db_path) as conn:
             query = """SELECT 
                     author, title, description,
-                    date, likes, comments, link, category, ticker_notification_sent, found_tickers
+                    posted_date, likes, comments, link, category, ticker_notification_sent, found_tickers
             FROM posts"""
             results = pd.read_sql_query(query, conn)
             results.rename(

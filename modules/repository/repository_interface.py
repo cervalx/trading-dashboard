@@ -11,6 +11,7 @@ class PostData:
     likes: int
     comments: int
     id: str
+    posted_date: str
     author: Optional[str] = None
     title: Optional[str] = None
     description: Optional[str] = None
