@@ -120,6 +120,7 @@ class SupabaseRepository(metaclass=PrebuildHook):
         df.rename(
             columns={"tickers_notifications_sent": "watched_tickers"}, inplace=True
         )
+        df["posted_date"] = pd.to_datetime(df["posted_date"])
         return df
 
     def update_post(self, post: PostData):

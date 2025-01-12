@@ -106,6 +106,7 @@ class Sqlite3Repository(metaclass=PrebuildHook):
             results.rename(
                 {"ticker_notification_sent": "watched_tickers"}, axis=1, inplace=True
             )
+            results["posted_date"] = pd.to_datetime(results["posted_date"])
         return results
 
     def update_post(self, post: PostData):
