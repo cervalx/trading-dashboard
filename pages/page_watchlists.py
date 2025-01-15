@@ -1,9 +1,15 @@
 import streamlit as st
+import yfinance as yf
+import pandas as pd
+import plotly.graph_objects as go
+from datetime import datetime, timedelta
 from modules.navigation import *
+from modules.watchlists import Watchlists
 
 add_navigation()
 
 st.title("Watchlists")
+# watchlists = Watchlists.load_watchlists()
 
 # PSEUDO CODE
 # INPUT from user: watchlist name, watchlist tickers as comma separated: "COKE, ROOT,ZS, SMCI"
@@ -17,3 +23,106 @@ st.title("Watchlists")
 # ANALIZE
 # Select a watchlist, show for eacth ticker pct. change since [timestamp watchlist created, custom timestamp input]
 # Show graphs using yfinance for the moment
+
+st.subheader("Manage Watchlists")
+
+# Load existing watchlists
+watchlists = Watchlists.load_watchlists()
+watchlist_names = list(watchlists.keys())
+
+# Edit watchlist names
+edited_names = st.data_editor(
+    {"Watchlists": watchlist_names},
+    num_rows="dynamic",
+    key="watchlist_names"
+)
+
+# Update watchlist names
+updated_watchlists = {}
+for name in edited_names["Watchlists"]:
+    if name:  # Skip empty names
+        if name in watchlists:
+            updated_watchlists[name] = watchlists[name]
+        else:
+            updated_watchlists[name] = []
+
+# Select and edit specific watchlist
+if updated_watchlists:
+    selected_watchlist = st.selectbox(
+        "Select watchlist to edit and analyze",
+        options=list(updated_watchlists.keys())
+    )
+
+    if selected_watchlist:
+        st.subheader(f"Edit tickers for watchlist: {selected_watchlist}")
+        edited_tickers = st.data_editor(
+            {"Tickers": updated_watchlists[selected_watchlist]},
+            num_rows="dynamic",
+            key="watchlist_tickers"
+        )
+
+        # Update the selected watchlist
+        updated_watchlists[selected_watchlist] = [
+            ticker for ticker in edited_tickers["Tickers"] if ticker
+        ]
+
+# Save changes
+Watchlists.save_watchlists(updated_watchlists)
+
+st.divider()
+st.subheader("Watchlist Analysis")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    # default start date 1 year ago
+    analysis_start_date = st.date_input("Start Date", datetime.now().date() - timedelta(days=365))
+with col2:
+    analysis_end_date = st.date_input("End Date")
+
+tab1, tab2 = st.tabs(["Detailed Analysis", "Summary"])
+
+summary_data = []
+
+for each_ticker in updated_watchlists[selected_watchlist]:
+    with tab1:
+        df = yf.Ticker(each_ticker).history(start=analysis_start_date, end=analysis_end_date)
+
+        # Create candlestick chart
+        fig = go.Figure(
+            data=[
+                go.Candlestick(
+                    x=df.index,
+                    open=df["Open"],
+                    high=df["High"],
+                    low=df["Low"],
+                    close=df["Close"],
+                )
+            ]
+        )
+        fig.update_layout(
+            title=f"{each_ticker} Stock Price",
+            yaxis_title="Stock Price (USD)",
+            xaxis_title="Date",
+            xaxis_rangeslider_visible=False,
+        )
+
+        st.plotly_chart(fig, use_container_width=True, key=f"candlestick_{each_ticker}")
+
+        st.write('Analysis for ticker: ' + each_ticker)
+        # percentage change
+        ticker_pct_change = ((df['Close'].iloc[-1] / df['Close'].iloc[0] - 1) * 100)
+        ticker_minimum = df['Close'].min()
+        ticker_maximum = df['Close'].max()
+        summary_data.append([each_ticker, ticker_pct_change, ticker_minimum, ticker_maximum])
+
+        st.write('Percent change from start to end: ', ticker_pct_change, '%')
+        # minimum and maximum
+        st.write('Minimum: ', ticker_minimum, 'Maximum: ', ticker_maximum, ' closing price.')
+        st.divider()
+
+with tab2:
+    if summary_data:
+        # add Ticker and pctChange as columns
+        summary_df = pd.DataFrame(summary_data, columns=["Ticker", "Percent Change", "Minimum", "Maximum"])
+        st.dataframe(summary_df)

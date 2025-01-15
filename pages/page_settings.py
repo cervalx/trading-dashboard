@@ -40,7 +40,7 @@ with col1:
     )
 
 with col2:
-    st.write("Watchlist positions")
+    st.write("Watchlist positions (and Telegram alerts)")
     watchlist_positions = st.data_editor(
         {"Ticker": settings["watchlist_positions"]}, num_rows="dynamic"
     )

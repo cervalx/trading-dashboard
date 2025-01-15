@@ -40,9 +40,9 @@ MAX_LOOKBACK_DAYS = (
 MIN_LOOKBACK_DAYS = 1
 
 
-ticker_watchlist = Settings.get_setting("watchlist_positions") + ["BTC"]
+ticker_watchlist = Settings.get_setting("watchlist_positions")
 # TODO: requires proper implementation
-all_tickers_list = Settings.fetch_tickers_list() + ["BTC"]
+all_tickers_list = Settings.fetch_tickers_list()
 
 
 def find_tickers_in_text(
