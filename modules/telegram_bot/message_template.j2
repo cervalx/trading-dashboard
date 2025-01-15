@@ -1,8 +1,8 @@
 <b>Latest Stock Updates:</b>
 
 {% for post in posts %}
-<b style="color=red"> {{ post.ticker }} </b> ===> <b><i> {{ post.title }} </i></b>
-{% if link is not none %}
+<b> {{ post.ticker }} </b> ===> <b><i> {% if post.title is not none %} {{ post.title }} {% else %} No title was scraped. {% endif %} </i></b>
+{% if post.link is not none %}
     link to post: {{ post.link }}
 {% else %}
     link to post was not scraped.

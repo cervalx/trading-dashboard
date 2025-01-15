@@ -60,7 +60,3 @@ def get_scraper_credentials():
         if "website" in credentials and "storage" in credentials:
             return credentials
         return trading_edge_credentials_prompt()
-
-
-if __name__ == "__main__":
-    set_credentials()
