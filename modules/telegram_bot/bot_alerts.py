@@ -102,12 +102,17 @@ def compile_message_datalist(
 async def main():
     global telegram_chat_id
     global telegram_bot_token
+    # Check if the bot token and chat id are both set, othwerwise ask for them
     if len(telegram_chat_id) == 0 or len(telegram_bot_token) == 0:
         credentials = get_credentials()
         if credentials is None:
             logger.error("No credentials provided, exiting...")
         telegram_chat_id = credentials["telegram_chat_id"]
         telegram_bot_token = credentials["telegram_bot_token"]
+        settings = Settings.load_settings()
+        settings["telegram_chat_id"] = telegram_chat_id
+        settings["telegram_bot_token"] = telegram_bot_token
+        Settings.save_settings(settings)
     config = json.load(open("./modules/tradingedge_scraper/credentials.json"))
     data = config.get("storage")
     engine = data.pop("storage_engine")
