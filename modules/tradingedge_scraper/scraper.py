@@ -3,15 +3,26 @@ from supabase import create_client
 import time
 import re
 from colorama import init, Fore
-from postgrest import AsyncPostgrestClient
 import asyncio
 from loguru import logger
 from ..repository.supabase_repo import SupabaseRepository
 from ..repository.repository_interface import PostData
 from .credentials import get_scraper_credentials, set_credentials
 import inquirer
+from modules.settings import Settings
+import pandas as pd
+import sys
+from datetime import datetime
 
 init(autoreset=True)
+
+logger.remove()
+logger.add(
+    sys.stderr,
+    format="<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <cyan>{level: <8}</cyan> | <yellow>{name}:{function}:{line}</yellow> - {message}",
+    colorize=True,
+    level="DEBUG",
+)
 
 URL_LIST = {
     "personal_feed": "https://tradingedge.club/feed?sort=newest",
@@ -27,6 +38,24 @@ MAX_LOOKBACK_DAYS = (
     6  # 7 is already considered a week, posts older than 6 days are obsolete anyway
 )
 MIN_LOOKBACK_DAYS = 1
+
+
+ticker_watchlist = Settings.get_setting("watchlist_positions") + ["BTC"]
+# TODO: requires proper implementation
+all_tickers_list = Settings.fetch_tickers_list() + ["BTC"]
+
+
+def find_tickers_in_text(
+    article_text, valid_tickers=all_tickers_list, watchlist_positions=ticker_watchlist
+):
+    # Basic uppercase pattern (1-5 letters)
+    possible_tickers = re.findall(r"(?:^|\b)[A-Z]{1,7}(?:\b|$)", article_text)
+
+    # Filter by known valid tickers
+    found = [t for t in possible_tickers if t in valid_tickers]
+    watched = [t for t in found if t in watchlist_positions]
+    return list(set(watched)), list(set(found))
+    # remove duplicates if needed
 
 
 # This class scrapes the posts from the given url and inserts them into the database
@@ -265,12 +294,28 @@ class Scraper:
             )
             if link is None:
                 continue
-            category = category = (
+            category = (
                 post.query_selector(".post-tag-name").inner_text()
                 if post.query_selector(".post-tag-name")
                 else None
             )
 
+            posted_date = (
+                post.query_selector(".feed-item-post-created-at").get_attribute("title")
+                if post.query_selector(".feed-item-post-created-at")
+                else None
+            )
+
+            posted_time = None
+            if posted_date is not None:
+                posted_time = datetime.strptime(posted_date, "%a, %B %d, %Y, %I:%M%p")
+                posted_time = posted_time.strftime("%Y-%m-%d %H:%M:%S")
+
+            title_str = title if title else ""
+            description_str = description if description else ""
+            watched_tickers, found_tickers = find_tickers_in_text(
+                f"{title_str} {description_str}"
+            )
             # Check if post exists already
             post_exists = self.storage.post_exists(id)
             if post_exists:
@@ -279,8 +324,12 @@ class Scraper:
                         id=id,
                         title=title,
                         description=description,
-                        likes=likes,
-                        comments=comments,
+                        likes=int(likes),
+                        comments=int(comments),
+                        posted_date=posted_time,
+                        date=posted_time,
+                        ticker_notification_sent=", ".join(watched_tickers),
+                        found_tickers=", ".join(found_tickers),
                     )
                 )
                 number_updated_posts += 1
@@ -291,10 +340,14 @@ class Scraper:
                         author=author,
                         title=title,
                         description=description,
-                        likes=likes,
-                        comments=comments,
+                        likes=int(likes),
+                        comments=int(comments),
+                        posted_date=posted_time,
+                        date=posted_time,
                         link=link,
                         category=category,
+                        ticker_notification_sent=", ".join(watched_tickers),
+                        found_tickers=", ".join(found_tickers),
                     )
                 )
                 number_new_posts += 1
@@ -307,6 +360,6 @@ class Scraper:
 
 
 if __name__ == "__main__":
-    scraper = Scraper(SupabaseRepository, debug=True)
+    scraper = Scraper(SupabaseRepository, debug=True, headless=True)
     scraper.build()
     scraper.run()

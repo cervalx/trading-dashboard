@@ -13,26 +13,12 @@ from collections import namedtuple
 import pandas as pd
 
 
-def get_credentials():
-    # Get Supabase credentials
-    sqlite3_prompts = [
-        inquirer.Text("sqlite3_file", message="Enter the Sqlite DB path"),
-    ]
-    print(
-        f"""{os.linesep}{Fore.YELLOW}
-        To access the database you need to set a path for the file to be created.{os.linesep}
-        {os.linesep}
-        """
-    )
-    return inquirer.prompt(sqlite3_prompts)
-
-
 class PrebuildHook(PostRepository, type):
     def __call__(cls, *args, **kwargs):
         logger.info("Pre-object build hook (metaclass) executing...")
-        credentials = kwargs.get("preloaded_credentials", None)
-        if credentials is None:
-            credentials = get_credentials()
+        credentials = kwargs.get(
+            "preloaded_credentials", {"sqlite3_file": "./local/scraper.db"}
+        )
         storage = credentials["sqlite3_file"]
 
         instance = super().__call__(storage, *args, **kwargs)
@@ -51,18 +37,19 @@ class Sqlite3Repository(metaclass=PrebuildHook):
                     author VARCHAR(255) NOT NULL,
                     title TEXT,
                     description TEXT,
+                    posted_date TEXT,
                     date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
                     likes INTEGER NOT NULL DEFAULT 0,
                     comments INTEGER NOT NULL DEFAULT 0,
                     link TEXT NOT NULL,
                     category VARCHAR(255) NOT NULL,
                     content_parsed BOOLEAN NOT NULL DEFAULT FALSE,
-                    ticker_notification_sent VARCHAR(10) NOT NULL DEFAULT 'no',
-                    found_tickers TEXT NOT NULL DEFAULT 'none'
+                    ticker_notification_sent VARCHAR(100) DEFAULT NULL,
+                    found_tickers TEXT DEFAULT NULL
                 );""")
             conn.commit()
 
-    def create_post(self, post: PostData) -> bool:
+    def create_post(self, post: PostData):
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             insert_data = {
@@ -71,8 +58,6 @@ class Sqlite3Repository(metaclass=PrebuildHook):
             }
             for field_name in [
                 "content_parsed",
-                "ticker_notification_sent",
-                "found_tickers",
             ]:
                 insert_data.pop(field_name)
             values_queries = ", ".join(["?"] * len(insert_data.keys()))
@@ -86,7 +71,6 @@ class Sqlite3Repository(metaclass=PrebuildHook):
     def post_exists(self, id: int) -> bool:
         results = None
         with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
             query = """
                 SELECT
                     author, title, description,
@@ -97,22 +81,21 @@ class Sqlite3Repository(metaclass=PrebuildHook):
             results = pd.read_sql_query(query, conn, params=params)
         return not results.empty
 
-        # return self.supabase.table("posts").select("id").eq("id", id).execute().data
-
-    def get_post(self, title: str) -> Optional[dict]:
-        pass
-
-    def get_feed(self) -> List[dict]:
+    def get_feed(self) -> pd.DataFrame:
         results = None
         with sqlite3.connect(self.db_path) as conn:
             query = """SELECT 
                     author, title, description,
-                    date, likes, comments, link, category
+                    posted_date, likes, comments, link, category, ticker_notification_sent, found_tickers
             FROM posts"""
             results = pd.read_sql_query(query, conn)
+            results.rename(
+                {"ticker_notification_sent": "watched_tickers"}, axis=1, inplace=True
+            )
+            results["posted_date"] = pd.to_datetime(results["posted_date"])
         return results
 
-    def update_post(self, post: PostData) -> bool:
+    def update_post(self, post: PostData):
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             query = """
@@ -128,30 +111,23 @@ class Sqlite3Repository(metaclass=PrebuildHook):
             )
             conn.commit()
 
-    def get_unprocessed_posts(self) -> List[dict]:
+    def get_unprocessed_posts(self) -> pd.DataFrame:
         with sqlite3.connect(self.db_path) as conn:
             query = """
-                SELECT id, title, description, link FROM posts WHERE content_parsed = FALSE
+                SELECT id, title, link, ticker_notification_sent FROM posts WHERE content_parsed = FALSE
             """
             results = pd.read_sql_query(query, conn)
         return results
 
-    def update_post_tags(self, id, watched_tickers, found_tickers) -> bool:
+    def update_post_tags(self, id):
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             query = """
                 UPDATE posts
-                SET content_parsed = TRUE,
-                    ticker_notification_sent = ?,
-                    found_tickers = ?
+                SET content_parsed = TRUE
             WHERE id = ?"""
-            cursor.execute(
-                query, (", ".join(watched_tickers), ", ".join(found_tickers), id)
-            )
+            cursor.execute(query, (id,))
             conn.commit()
-
-    def delete_post(self, title: str) -> bool:
-        pass
 
 
 if __name__ == "__main__":
