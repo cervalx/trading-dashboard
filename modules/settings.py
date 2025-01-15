@@ -1,4 +1,5 @@
 import json
+import csv
 from config import LOCAL_DIR
 from loguru import logger
 
@@ -6,8 +7,14 @@ from loguru import logger
 class Settings:
     @staticmethod
     def fetch_tickers_list() -> list[str]:
-        logger.warning("TODO: Currently is not implemented")
-        return ["AAPL", "TSLA", "NVDA", "AMD", "COKE", "ARM", "F"]  # Example list
+        # read list from static csv file 'static/nasdaq_screener_1736874960864.csv', column Symbol
+        tickers_list = []
+        with open('static/nasdaq_screener_1736874960864.csv', mode='r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                tickers_list.append(row['Symbol'])
+        # return ["AAPL", "TSLA", "NVDA", "AMD", "COKE", "ARM", "F"]  # Example list
+        return tickers_list
 
     @staticmethod
     def get_setting(setting_name) -> str | list[str] | dict:

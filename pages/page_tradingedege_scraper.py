@@ -45,14 +45,14 @@ else:
                 f"Storage choice {engine} not implemented, but this should never happen."
             )
             raise ValueError(f"Storage choice {engine} not implemented")
-    feed_df = pd.DataFrame(feed)
 
+    # DISPLAY THE FEED        
     # organise columns first: title, author, link
     first_columns = ["title", "description", "link"]
-    feed_df = feed_df[first_columns + [col for col in feed_df.columns if col not in first_columns]]
+    feed = feed[first_columns + [col for col in feed.columns if col not in first_columns]]
     # sort by date newest
-    feed_df = feed_df.sort_values(by="date", ascending=False)
+    feed = feed.sort_values(by="posted_date", ascending=False)
     # display df, format link column
-    st.dataframe(feed_df, column_config={"link": st.column_config.LinkColumn()})
+    st.dataframe(feed, column_config={"link": st.column_config.LinkColumn()})
 
 st.divider()
