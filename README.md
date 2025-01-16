@@ -39,7 +39,7 @@ poetry run python -m modules.tradingedge_scraper.scraper
 # you should receive messages for BTC because BTC is hardcoded in the watched list
 # and the full ticker list. TODO this needs to take in the full ticker list and the watched list
 # needs to be changed from the settings in streamlit before this PR gets merged
-poetry run python -m modules.tradingedge_scraper.telegram_bot.bot_alerts
+poetry run python -m modules.telegram_bot.bot_alerts
 ```
 
 ```sh

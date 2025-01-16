@@ -114,8 +114,8 @@ for each_ticker in updated_watchlists[selected_watchlist]:
         ticker_pct_change = ((df['Close'].iloc[-1] / df['Close'].iloc[0] - 1) * 100)
         ticker_minimum = df['Close'].min()
         ticker_maximum = df['Close'].max()
-        summary_data.append([each_ticker, ticker_pct_change, ticker_minimum, ticker_maximum])
-
+        ticker_row = [each_ticker, ticker_pct_change, ticker_minimum, ticker_maximum]
+        summary_data.append(ticker_row)
         st.write('Percent change from start to end: ', ticker_pct_change, '%')
         # minimum and maximum
         st.write('Minimum: ', ticker_minimum, 'Maximum: ', ticker_maximum, ' closing price.')
@@ -124,5 +124,5 @@ for each_ticker in updated_watchlists[selected_watchlist]:
 with tab2:
     if summary_data:
         # add Ticker and pctChange as columns
-        summary_df = pd.DataFrame(summary_data, columns=["Ticker", "Percent Change", "Minimum", "Maximum"])
+        summary_df = pd.DataFrame(summary_data, columns=["Ticker", "Percent Change [%]", "Minimum [$]", "Maximum [$]"])
         st.dataframe(summary_df)
