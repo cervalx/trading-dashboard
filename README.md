@@ -1,4 +1,4 @@
-# tradingedge.club-scraper
+# trading-dashboard
 
 ### Prerequisites
 
