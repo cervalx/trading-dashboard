@@ -3,6 +3,7 @@ from typing import Dict, List
 from config import LOCAL_DIR
 from loguru import logger
 
+
 class Watchlists:
     @staticmethod
     def load_watchlists() -> Dict[str, List[str]]:

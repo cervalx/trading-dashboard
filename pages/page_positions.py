@@ -91,21 +91,27 @@ else:
             )
             raise ValueError(f"Storage choice {engine} not implemented")
 
-    # DISPLAY THE FEED        
+    # DISPLAY THE FEED
     # filter by ticker
     feed = feed[feed["found_tickers"].str.contains(selected_position)]
     # organise columns first: title, author, link
     first_columns = ["title", "description", "link"]
-    feed = feed[first_columns + [col for col in feed.columns if col not in first_columns]]
+    feed = feed[
+        first_columns + [col for col in feed.columns if col not in first_columns]
+    ]
     # sort by date newest
     feed = feed.sort_values(by="posted_date", ascending=False)
     # display df, format link column
     st.dataframe(feed, column_config={"link": st.column_config.LinkColumn()})
 
 st.divider()
-st.subheader("Options Analysis")
+st.subheader("Options Analysis link")
 # Link to https://mztrading.netlify.app/options/analyze/NVDA
 st.write(f"Link to https://mztrading.netlify.app/options/analyze/{selected_position}")
 
+st.divider()
+st.subheader("TradingView link")
+# Link to https://tradingview.com/chart/?symbol=NVDA
+st.write(f"Link to https://tradingview.com/chart/?symbol={selected_position}")
 st.divider()
 # TODO: add posts about ticker

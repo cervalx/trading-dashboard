@@ -53,19 +53,28 @@ with col3:
 
 st.divider()
 st.subheader("Telegram Bot")
-telegram_bot_token = st.text_input("Enter your Telegram Bot Token", value=settings["telegram_bot_token"], type="password")
+telegram_bot_token = st.text_input(
+    "Enter your Telegram Bot Token",
+    value=settings["telegram_bot_token"],
+    type="password",
+)
 
 if settings.get("telegram_chat_id") is None or settings["telegram_chat_id"] == "":
     telegram_chat_id = ""
 
     if st.button("Get Telegram Bot Chat ID"):
+
         def get_telegram_bot_chat_id(token):
             # access https://api.telegram.org/bot{our_bot_token}/getUpdates, get chat id
-            chat_id = None
+            chat_id = ""
             try:
-                response = requests.get(f"https://api.telegram.org/bot{token}/getUpdates")
+                response = requests.get(
+                    f"https://api.telegram.org/bot{token}/getUpdates"
+                )
                 data = json.loads(response.text)
                 chat_id = data["result"][0]["message"]["chat"]["id"]
+                # make chat_id a string
+                chat_id = str(chat_id)
             except Exception as e:
                 logger.error(e)
             return chat_id
@@ -73,7 +82,10 @@ if settings.get("telegram_chat_id") is None or settings["telegram_chat_id"] == "
         telegram_chat_id = get_telegram_bot_chat_id(telegram_bot_token)
         st.write(f"Telegram chat id: {telegram_chat_id}")
 else:
-    telegram_chat_id = st.text_input("Telegram Chat ID", value=settings["telegram_chat_id"])
+    telegram_chat_id = st.text_input(
+        "Telegram Chat ID", value=settings["telegram_chat_id"]
+    )
+    st.rerun()
 
 st.divider()
 

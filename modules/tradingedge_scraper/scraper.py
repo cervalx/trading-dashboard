@@ -39,9 +39,10 @@ MAX_LOOKBACK_DAYS = (
 )
 MIN_LOOKBACK_DAYS = 1
 
+TIMEOUT_SLIDE_ANIMATION = 2 # seconds
+
 
 ticker_watchlist = Settings.get_setting("watchlist_positions")
-# TODO: requires proper implementation
 all_tickers_list = Settings.fetch_tickers_list()
 
 
@@ -253,6 +254,7 @@ class Scraper:
 
         posts = self.load_all_posts()
         for post in posts:
+
             id = post.get_attribute("data-post-id")
             author = (
                 post.query_selector(".mighty-attribution-name span").inner_text()
@@ -264,11 +266,30 @@ class Scraper:
                 if post.query_selector(".feed-item-post-title h1")
                 else None
             )
-            description = (
-                post.query_selector(".feed-item-post-description").inner_text()
-                if post.query_selector(".feed-item-post-description")
-                else None
-            )
+            # Handle long / short description
+            # Check if post has long description
+            if post.query_selector(".mighty-wysiwyg-content-show-more"):
+                logger.info("Post has long description")
+                post.query_selector(".mighty-wysiwyg-content-show-more").click()
+                # after click, wait to load the new page
+                time.sleep(TIMEOUT_SLIDE_ANIMATION)
+                # get long description
+                description = (
+                    self.page.query_selector(".detail-layout-description").inner_text()
+                    if self.page.query_selector(".detail-layout-description")
+                    else None
+                )
+                # close the post
+                self.page.query_selector(".btn-close").click()
+                time.sleep(TIMEOUT_SLIDE_ANIMATION)
+            else:
+                # get short description
+                description = (
+                    post.query_selector(".feed-item-post-description").inner_text()
+                    if post.query_selector(".feed-item-post-description")
+                    else None
+                )
+
             likes = (
                 post.query_selector(
                     ".mighty-post-stat-cheer .mighty-post-stat-cheer-count"

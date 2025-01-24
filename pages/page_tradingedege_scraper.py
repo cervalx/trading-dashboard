@@ -46,10 +46,12 @@ else:
             )
             raise ValueError(f"Storage choice {engine} not implemented")
 
-    # DISPLAY THE FEED        
+    # DISPLAY THE FEED
     # organise columns first: title, author, link
     first_columns = ["title", "description", "link"]
-    feed = feed[first_columns + [col for col in feed.columns if col not in first_columns]]
+    feed = feed[
+        first_columns + [col for col in feed.columns if col not in first_columns]
+    ]
     # sort by date newest
     feed = feed.sort_values(by="posted_date", ascending=False)
     # display df, format link column

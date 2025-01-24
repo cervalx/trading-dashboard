@@ -31,7 +31,8 @@ class Sqlite3Repository(metaclass=PrebuildHook):
         self.db_path = storage
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS posts (
                     id PRIMARY KEY,
                     author VARCHAR(255) NOT NULL,
@@ -46,7 +47,8 @@ class Sqlite3Repository(metaclass=PrebuildHook):
                     content_parsed BOOLEAN NOT NULL DEFAULT FALSE,
                     ticker_notification_sent VARCHAR(100) DEFAULT NULL,
                     found_tickers TEXT DEFAULT NULL
-                );""")
+                );"""
+            )
             conn.commit()
 
     def create_post(self, post: PostData):
