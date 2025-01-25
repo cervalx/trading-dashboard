@@ -1,6 +1,7 @@
 import json
 import csv
 from config import LOCAL_DIR
+from os import getenv
 from loguru import logger
 
 
@@ -9,17 +10,27 @@ class Settings:
     def fetch_tickers_list() -> list[str]:
         # read list from static csv file 'static/nasdaq_screener_1736874960864.csv', column Symbol
         tickers_list = []
-        with open('static/nasdaq_screener_1736874960864.csv', mode='r') as file:
+        with open("static/nasdaq_screener_1736874960864.csv", mode="r") as file:
             reader = csv.DictReader(file)
             for row in reader:
-                tickers_list.append(row['Symbol'])
+                tickers_list.append(row["Symbol"])
         # return ["AAPL", "TSLA", "NVDA", "AMD", "COKE", "ARM", "F"]  # Example list
         return tickers_list
 
     @staticmethod
     def get_setting(setting_name) -> str | list[str] | dict:
         settings = Settings.load_settings()
-        return settings.get(setting_name, "")
+        setting_value = settings.get(setting_name)
+        if setting_value is not None:
+            return setting_value
+        else:
+            setting_value = getenv(setting_name.upper())
+            if setting_value is not None:
+                settings = {**settings, setting_name: setting_value}
+                Settings.save_settings(settings)
+                return setting_value
+            else:
+                return ""
 
     @staticmethod
     def load_settings() -> dict:
