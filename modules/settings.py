@@ -1,6 +1,7 @@
 import json
 import csv
 from config import LOCAL_DIR
+from os import getenv
 from loguru import logger
 
 
@@ -19,7 +20,17 @@ class Settings:
     @staticmethod
     def get_setting(setting_name) -> str | list[str] | dict:
         settings = Settings.load_settings()
-        return settings.get(setting_name, "")
+        setting_value = settings.get(setting_name)
+        if setting_value is not None:
+            return setting_value
+        else:
+            setting_value = getenv(setting_name.upper())
+            if setting_value is not None:
+                settings = {**settings, setting_name: setting_value}
+                Settings.save_settings(settings)
+                return setting_value
+            else:
+                return ""
 
     @staticmethod
     def load_settings() -> dict:

@@ -380,6 +380,12 @@ class Scraper:
     # because when opening the link it renders an offcanvas where data like likes and comments are missing
 
 
+def main():
+    scraper = Scraper(SupabaseRepository, debug=True, headless=True)
+    scraper.build()
+    scraper.run()
+
+
 if __name__ == "__main__":
     scraper = Scraper(SupabaseRepository, debug=True, headless=True)
     scraper.build()

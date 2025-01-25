@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  fastapi-streamlit:
+    build:
+      context: .
+      dockerfile: ./docker/app.dockerfile
+    container_name: fastapi-streamlit-combined
+    environment:
+      - TELEGRAM_BOT_TOKEN = ""
+      - TELEGRAM_CHAT_ID = ""
+    ports:
+      - "8000:8000"
+      # - "8501:8501"
+    # volumes:
+    #   - .:/app
