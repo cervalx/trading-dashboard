@@ -124,10 +124,6 @@ for each_ticker in updated_watchlists[selected_watchlist]:
 
         st.plotly_chart(figCandle, use_container_width=True, key=f"candlestick_{each_ticker}")
 
-        # display heatmap
-        # TODO: fix
-        # figHeatmap = px.density_heatmap(df["Close"], text_auto=True)
-        # st.plotly_chart(figHeatmap, use_container_width=True)
 
         st.write("Analysis for ticker: " + each_ticker)
         # percentage change
